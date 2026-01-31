@@ -1,13 +1,19 @@
-local debug = {}
+local DC = require("scripts.constants.debug") -- Debug constants.
+
+local dbg = {}
 
 -- Debug levels.
-debug.level = {none = 0, error = 1, warn = 2, info = 3, trace = 4}
+dbg.level = {
+	none = 0,
+	error = 1,
+	warn = 2,
+	info = 3,
+	trace = 4
+}
 
 -- Default level (change this to control verbosity).
-debug.current_level = debug.level.info
+dbg.current_level = dbg.level.info
 
--- Optional: rate limiting (in ticks).
-local RATE_LIMIT = 30
 local last_print_tick = {}
 
 -- Internal safe message printer.
@@ -15,47 +21,103 @@ local function safe_print(key, msg)
 	local tick = game and game.tick or 0
 
 	-- Rate limit by key.
-	if last_print_tick[key] and tick - last_print_tick[key] < RATE_LIMIT then
-		return
+	if DC.DEBUG_ENABLE_RATE_LIMITER then
+		if last_print_tick[key] and tick - last_print_tick[key] < DC.DEBUG_RATE_LIMIT then
+			return
+		end
 	end
 
 	last_print_tick[key] = tick
 
 	-- Safe print (won't crash if game isn't ready).
-	if game and game.print then game.print(msg) end
+	if game and game.print then
+		game.print(msg)
+	end
 end
 
 -- Core logging function.
-local function log(level, subsystem, message)
-	if level > debug.current_level then return end
+-- local function get_caller_module()
+-- 	local info = debug.getinfo(1, "S")
+-- 	local func = debug.getinfo(1, "n").name or "?"
+
+-- 	if not info or not info.source then
+-- 		return "unknown_caller"
+-- 	end
+
+-- 	local src = info.source
+-- 	src = src:gsub("^@", "")
+
+-- 	local filename = src:match("([^/\\]+)$")
+-- 	filename = filename:gsub("%.lua$", "")
+
+-- 	return {
+-- 		filename = filename or src,
+-- 		func = func
+-- 	}
+-- end
+
+local function get_caller_module()
+	local level = 3
+	while true do
+		local info = debug.getinfo(level, "Sln")
+		if not info then
+			return {
+				filename = "unknown",
+				func = "?"
+			}
+		end
+
+		-- Only accept Lua source files (start with "@")
+		if info.source and info.source:sub(1, 1) == "@" then
+			local filename = info.source:match("([^/\\]+)$") or info.source
+			filename = filename:gsub("%.lua$", "")
+			local func = info.name or "?"
+			return {
+				filename = filename,
+				func = func
+			}
+		end
+
+		level = level + 1
+	end
+end
+
+local function log(level, message)
+	if level > dbg.current_level then
+		return
+	end
+
+	local module_info = get_caller_module()
+	game.print(serpent.line(module_info))
 
 	local tick = game and game.tick or 0
-	local prefix = string.format("[BP][%s][%d][%s] ",
-								 (level == debug.level.error and "ERROR") or
-									 (level == debug.level.warn and "WARN") or
-									 (level == debug.level.info and "INFO") or
-									 "TRACE", tick, subsystem or "core")
+	local prefix = string.format("[BP][%s][%d][%s][%s] ", (level == dbg.level.error and "ERROR") or (level == dbg.level.warn and "WARN") or
+			(level == dbg.level.info and "INFO") or "TRACE", tick, module_info.filename, module_info.func)
 
-	safe_print(subsystem or "core", prefix .. tostring(message))
+	safe_print(module_info.filename, prefix .. tostring(message))
 end
 
 -- Public helpers.
-function debug.error(subsystem, message)
-	log(debug.level.error, subsystem, message)
+function dbg.error(message)
+	log(dbg.level.error, message)
 end
 
-function debug.warn(subsystem, message) log(debug.level.warn, subsystem, message) end
+function dbg.warn(message)
+	log(dbg.level.warn, message)
+end
 
-function debug.info(subsystem, message) log(debug.level.info, subsystem, message) end
+function dbg.info(message)
+	log(dbg.level.info, message)
+end
 
-function debug.trace(subsystem, message)
-	log(debug.level.trace, subsystem, message)
+function dbg.trace(message)
+	log(dbg.level.trace, message)
 end
 
 -- Allow runtime toggling via /petdebuglevel console command.
-function debug.set_level(level)
-	debug.current_level = level
-	debug.info("debug", "Debug level set to " .. tostring(level))
+function dbg.set_level(level)
+	dbg.current_level = level
+	dbg.info("debug", "Debug level set to " .. tostring(level))
 end
 
-return debug
+return dbg
