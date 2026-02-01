@@ -66,6 +66,7 @@ function pet_growth.try_grow(player_index, entry)
 		if evo > GC.BABY_TO_SMALL_THRESHOLD and math.random() < GC.PET_GROWTH_CHANCE then
 			upgrade_pet(entry, "pet-biter-small")
 			entry.biter_tier = "pet-biter-small"
+			entry.biter_tier_friendly_name = "pet_biter_small"
 		end
 		return
 	end
@@ -75,6 +76,7 @@ function pet_growth.try_grow(player_index, entry)
 		if evo > GC.SMALL_TO_LARGE_THRESHOLD and math.random() < GC.PET_GROWTH_CHANCE then
 			upgrade_pet(entry, "pet-biter-large")
 			entry.biter_tier = "pet-biter-large"
+			entry.biter_tier_friendly_name = "pet_biter_large"
 		end
 		return
 	end

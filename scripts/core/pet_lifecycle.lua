@@ -1,11 +1,17 @@
 -- TODO: Move some functions out of this file and clean it up.
 -- TODO: Add entity at spawn point to represent nest like rail remnants or similar.
+-- TODO: Map pet biter sizes to base game biter entities for notifications.
+-- TODO: Create pet_sounds.lua for audio tied to biter size.
+-- TODO: Add small random chance for biter to investigate entity and pause for a second or two. This should take precedence over everything else.
+-- TODO: Player defense may be automatic based on force alliance, but test it out anyway.
 local debug = require("scripts.util.debug")
 local pet_state = require("scripts.core.pet_state")
 local position_util = require("scripts.util.position")
 local pet_visuals = require("scripts.core.pet_visuals")
 local pet_growth = require("scripts.core.pet_growth")
 local pet_spawn = require("scripts.core.pet_spawn")
+local notifications = require("scripts.util.notifications")
+local pet_events = require("scripts.core.pet_events")
 
 local LC = require("scripts.constants.lifecycle") -- Pet lifecycle constants.
 
@@ -18,6 +24,7 @@ function pet_lifecycle.get_pet_entry(player_index)
 		storage.biter_pet[player_index] = {
 			is_orphaned = true,
 			biter_tier = "pet-biter-baby",
+			biter_tier_friendly_name = "pet_biter_baby",
 			was_alive = true,
 			unit = nil
 			-- Any other pet lifecycle fields should go here.
@@ -58,7 +65,7 @@ local function find_nearest_fish(pet)
 	return nearest
 end
 
-local function handle_feeding_behavior(player_index, player, pet)
+local function handle_feeding_behavior(player_index, player, pet, entry)
 
 	local target = pet_state.get_feeding_target(player_index)
 	if not (target and target.valid) then
@@ -89,7 +96,7 @@ local function handle_feeding_behavior(player_index, player, pet)
 		local amount = target.stack.count
 		target.destroy()
 
-		pet_state.ate_food(player_index, pet)
+		pet_state.ate_food(player_index, player, pet, entry)
 		pet_state.set_feeding_target(player_index, nil)
 		return true
 	end
@@ -108,11 +115,13 @@ function pet_lifecycle.on_tick(event)
 	if (event.tick % 30) ~= 0 then
 		return
 	end
+
 	if not storage.biter_pet then
 		return
 	end
 	for player_index, entry in pairs(storage.biter_pet) do
 		pet_lifecycle.process_pet(player_index, entry)
+		pet_events.process_events(player_index, entry)
 	end
 end
 
@@ -128,7 +137,7 @@ function pet_lifecycle.process_pet(player_index, entry)
 	end
 
 	-- Update hunger value.
-	pet_state.tick_pet_state(player_index, pet)
+	pet_state.tick_pet_state(player_index, entry)
 
 	-- Skip other behaviors if paused.
 	if pet_lifecycle.handle_pause(player_index, entry, pet) then
@@ -228,19 +237,36 @@ function pet_lifecycle.handle_pause(player_index, entry, pet)
 
 	-- Still paused; skip all behaviors.
 	if paused_now then
-		debug.info("pet_lifecycle", "Pet is paused, skipping movement.")
+		debug.info("Paused: skipping movement.")
 		entry.was_paused = true
 		return true
 	end
 
 	-- Pause just ended; resume idle behvaior.
 	if was_paused and not paused_now then
-		debug.info("pet_lifecycle", "Resuming pet movement.")
 		entry.was_paused = false
 		pet_state.set_state(player_index, "idle")
-		debug.info("pet_lifecycle", "Pause ended, returning to idle.")
+		debug.info("Unpaused: resuming movement.")
 	end
 	return false
+end
+
+-- TODO: Store and retrieve entity name to update alert icon when biter evolves.
+-- TODO: Store and retrieve entity name and type to update pet audio based on size.
+local function check_for_adoption(player, player_index, pet, entry)
+	local hunger = pet_state.get_hunger(player_index)
+	if entry.is_orphaned and hunger < LC.BONDING_HUNGER_THRESHOLD then
+		if math.random() < LC.CHANCE_TO_ADOPT_BITER then
+			entry.is_orphaned = false
+			pet.force = player.force
+			debug.info("Pet is now unorphaned: entry.is_orphaned = " .. tostring(entry.is_orphaned))
+			notifications.notify(player, pet, {
+				type = "entity",
+				name = "small-biter"
+			}, "It seems attached to you now.", "utility/achievement_unlocked")
+			return true
+		end
+	end
 end
 
 function pet_lifecycle.state_seek_food(player_index, player, pet, entry)
@@ -250,14 +276,10 @@ function pet_lifecycle.state_seek_food(player_index, player, pet, entry)
 		return
 	end
 
-	local ate = handle_feeding_behavior(player_index, player, pet)
+	local ate = handle_feeding_behavior(player_index, player, pet, entry)
 
 	if ate then
-		local hunger = pet_state.get_hunger(player_index)
-		if entry.is_orphaned and hunger < LC.BONDING_HUNGER_THRESHOLD then
-			entry.is_orphaned = false
-			debug.info("pet_lifecycle", "Pet is now unorphaned: entry.is_orphaned = " .. tostring(entry.is_orphaned))
-		end
+		check_for_adoption(player, player_index, pet, entry)
 
 		-- Growth check happens immediately after eating.
 		pet_growth.try_grow(player_index, entry)
@@ -323,8 +345,6 @@ function pet_lifecycle.state_follow(player_index, player, pet, entry)
 end
 
 function pet_lifecycle.on_entity_died(event)
-	debug.info("pet_lifecycle", "on_entity_died fired");
-
 	local entity = event.entity
 	if not (entity and entity.valid and entity.type == "unit") then
 		return
@@ -332,13 +352,17 @@ function pet_lifecycle.on_entity_died(event)
 
 	for player_index, entry in pairs(storage.biter_pet) do
 		if entry.unit == entity then
+			debug.info("The pet seems to have died.");
 			entry.unit = nil
 			entry.was_alive = false
 			entry.last_death_tick = game.tick -- Record the time of death
 
 			local player = game.get_player(player_index)
 			if player then
-				player.print("Your loyal companion has died. A new orphan may appear one day.")
+				notifications.notify(player, pet, {
+					type = "entity",
+					name = "small-biter"
+				}, "Your loyal companion has died. Perhaps a new one friend may appear one day.", "utility/achievement_unlocked")
 			end
 			break
 		end

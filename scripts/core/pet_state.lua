@@ -19,7 +19,7 @@ local function ensure_state(player_index)
 		s = {
 			hunger = 100,
 			loyalty = 0,
-			sadness = 75,
+			sadness = 100,
 			boredom = 0,
 			feeding_target = nil
 		}
@@ -28,7 +28,7 @@ local function ensure_state(player_index)
 		-- Migration fallback.
 		s.hunger = s.hunger or 100
 		s.loyalty = s.loyalty or 0
-		s.sadness = s.sadness or 75
+		s.sadness = s.sadness or 100
 		s.boredom = s.boredom or 0
 		if s.feeding_target == nil then
 			s.feeding_target = nil
@@ -74,7 +74,7 @@ function pet_state.queue_emote(player_index, pet, emote)
 	end
 end
 
-function pet_state.force_emote(player_index, pet, emote)
+function pet_state.force_emote(player_index, pet, entry, emote)
 	local es = ensure_queue(player_index)
 	local now = game.tick
 
@@ -88,11 +88,12 @@ function pet_state.force_emote(player_index, pet, emote)
 	es.queue = {}
 
 	if pet and pet.valid then
-		pet_visuals.emote(pet, emote)
+		pet_visuals.emote(player_index, entry, emote, true)
 	end
 end
 
-local function tick_emotes(player_index, pet)
+local function tick_emotes(player_index, entry)
+	debug.trace("Processing pet emote for player: " .. player_index)
 	local es = ensure_queue(player_index)
 
 	local now = game.tick
@@ -112,30 +113,33 @@ local function tick_emotes(player_index, pet)
 	if next_emote then
 		table.remove(es.queue, 1)
 
-		local render_id = pet_visuals.emote(pet, next_emote)
+		-- TODO: Need these quoted variables passed.
+		local render_id = pet_visuals.emote(player_index, entry, next_emote, true)
 		es.render_id = render_id
 		es.active_emote = next_emote
 		es.ends_at_tick = now + (EMOTE_DURATION or 60)
 	end
 end
 
-function pet_state.tick_pet_state(player_index, pet)
+function pet_state.tick_pet_state(player_index, entry)
 	local s = ensure_state(player_index)
 	local now = game.tick
+	local pet = entry.unit
 
 	s.next_hunger_tick = s.next_hunger_tick or (now + HC.HUNGER_GAIN_INTERVAL)
-
 	if now >= s.next_hunger_tick then
+
 		-- Increment hunger.
 		s.hunger = math.min(100, s.hunger + HC.HUNGER_INCREMENT)
 		s.next_hunger_tick = now + HC.HUNGER_GAIN_INTERVAL -- Schedule next hunger increase.
 
 		-- Update mood based on stats
 		s.mood = pet_state.calculate_mood(player_index)
+		debug.trace("Queuing next mood emote: " .. s.mood)
 		pet_state.queue_emote(player_index, pet, s.mood)
 
 		-- Add mood to emote queue.
-		tick_emotes(player_index, pet)
+		tick_emotes(player_index, entry)
 
 	end
 end
@@ -284,9 +288,11 @@ function pet_state.get_feeding_target(player_index)
 	return s.feeding_target
 end
 
-function pet_state.ate_food(player_index, pet, food_value)
-	local s = ensure_state(player_index)
+function pet_state.ate_food(player_index, player, pet, entry, emote, food_value)
+	local e = emote or "love"
 	local fv = food_value or HC.HUNGER_DEFAULT_FOOD_VALUE
+
+	local s = ensure_state(player_index)
 
 	local satiation_mood_modifier = math.floor((s.hunger ^ 1.2) * 0.05)
 
@@ -295,7 +301,7 @@ function pet_state.ate_food(player_index, pet, food_value)
 	s.sadness = math.max(0, s.sadness - FC.FOOD_SADNESS_MODIFIER - satiation_mood_modifier)
 	s.boredom = math.max(0, s.boredom - FC.FOOD_BOREDOM_MODIFIER - satiation_mood_modifier)
 
-	pet_state.force_emote(player_index, pet, "love")
+	pet_state.force_emote(player_index, player, pet, entry, e)
 end
 
 -- Boredom functions.

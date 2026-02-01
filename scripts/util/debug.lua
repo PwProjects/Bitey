@@ -12,7 +12,7 @@ dbg.level = {
 }
 
 -- Default level (change this to control verbosity).
-dbg.current_level = dbg.level.info
+dbg.current_level = dbg.level.trace
 
 local last_print_tick = {}
 
@@ -34,27 +34,6 @@ local function safe_print(key, msg)
 		game.print(msg)
 	end
 end
-
--- Core logging function.
--- local function get_caller_module()
--- 	local info = debug.getinfo(1, "S")
--- 	local func = debug.getinfo(1, "n").name or "?"
-
--- 	if not info or not info.source then
--- 		return "unknown_caller"
--- 	end
-
--- 	local src = info.source
--- 	src = src:gsub("^@", "")
-
--- 	local filename = src:match("([^/\\]+)$")
--- 	filename = filename:gsub("%.lua$", "")
-
--- 	return {
--- 		filename = filename or src,
--- 		func = func
--- 	}
--- end
 
 local function get_caller_module()
 	local level = 3
@@ -88,8 +67,6 @@ local function log(level, message)
 	end
 
 	local module_info = get_caller_module()
-	game.print(serpent.line(module_info))
-
 	local tick = game and game.tick or 0
 	local prefix = string.format("[BP][%s][%d][%s][%s] ", (level == dbg.level.error and "ERROR") or (level == dbg.level.warn and "WARN") or
 			(level == dbg.level.info and "INFO") or "TRACE", tick, module_info.filename, module_info.func)

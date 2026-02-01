@@ -59,5 +59,33 @@ end
 data:extend{
 	make_pet_variant("small-biter", "pet-biter-baby", 0.65),
 	make_pet_variant("small-biter", "pet-biter-small", 0.85),
-	make_pet_variant("small-biter", "pet-biter-large", 1.0)
+	make_pet_variant("small-biter", "pet-biter-large", 1.0),
+
+	make_pet_variant("medium-biter", "pet-medium-biter-baby", 0.65),
+	make_pet_variant("medium-biter", "pet-medium-biter-small", 0.65),
+	make_pet_variant("medium-biter", "pet-medium-biter-large", 0.65),
+
+	make_pet_variant("big-biter", "pet-big-biter-baby", 0.65),
+	make_pet_variant("big-biter", "pet-big-biter-small", 0.65),
+	make_pet_variant("big-biter", "pet-big-biter-large", 0.65),
+
+	make_pet_variant("behemoth-biter", "pet-behemoth-biter-baby", 0.65),
+	make_pet_variant("behemoth-biter", "pet-behemoth-biter-small", 0.65),
+	make_pet_variant("behemoth-biter", "pet-behemoth-biter-large", 0.65),
+
+	make_pet_variant("small-spitter", "pet-spitter-baby", 0.65),
+	make_pet_variant("small-spitter", "pet-spitter-small", 0.85),
+	make_pet_variant("small-spitter", "pet-spitter-large", 1.0),
+
+	make_pet_variant("medium-spitter", "pet-medium-spitter-baby", 0.65),
+	make_pet_variant("medium-spitter", "pet-medium-spitter-small", 0.65),
+	make_pet_variant("medium-spitter", "pet-medium-spitter-large", 0.65),
+
+	make_pet_variant("big-spitter", "pet-big-spitter-baby", 0.65),
+	make_pet_variant("big-spitter", "pet-big-spitter-small", 0.65),
+	make_pet_variant("big-spitter", "pet-big-spitter-large", 0.65),
+
+	make_pet_variant("behemoth-spitter", "pet-behemoth-spitter-baby", 0.65),
+	make_pet_variant("behemoth-spitter", "pet-behemoth-spitter-small", 0.65),
+	make_pet_variant("behemoth-spitter", "pet-behemoth-spitter-large", 0.65)
 }

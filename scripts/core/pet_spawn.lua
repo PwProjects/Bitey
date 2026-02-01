@@ -1,4 +1,8 @@
+-- TODO: Delay notification until 10 seconds after opening cinematic.
+-- TODO: Move notification elsewhere.
 local debug = require("scripts.util.debug")
+local pet_nest = require("scripts.core.pet_nest")
+local position = require("scripts.util.position")
 
 local SC = require("scripts.constants.spawn") -- Pet spawn constants.
 
@@ -33,24 +37,27 @@ function pet_spawn.choose_orphan_spawn(surface, origin)
 		end
 	end
 
-	debug.info("Attempts: " .. attempts .. ", successes: " .. successes)
+	debug.info("Polling for valid spawn locations. Attempts: " .. attempts .. ", successes: " .. successes)
+	debug.info(successes .. " of " .. attempts .. " attemps were successful.")
 
 	-- Choose random spawn position for nest.
 	if #pos_candidates > 0 then
 		local spawn_pos = pos_candidates[math.random(1, #pos_candidates)]
-		debug.info("Choosing randomized spawn position: x=" .. serpent.line(spawn_pos))
+		debug.info("Choosing randomized spawn position: " .. serpent.line(spawn_pos))
 		return spawn_pos
 	end
 
 	-- Take another stab at it if all else fails.
 	local fallback_pos = surface.find_non_colliding_position("pet-biter-baby", origin, 20, 1) or origin
-	debug.info("Choosing fallback spawn position: x=" .. serpent.line(fallback_pos))
+	debug.info("Choosing fallback spawn position: " .. serpent.line(fallback_pos))
+	debug.info("The map better be very abnormal for this to have happened.")
 	return fallback_pos
 end
 
 function pet_spawn.spawn_orphan_baby(player, entry)
 	local surface = player.surface
 
+	-- Store orphan respawn point in the event pet dies.
 	if not storage.pet_spawn_point then
 		storage.pet_spawn_point = pet_spawn.choose_orphan_spawn(surface, player.position)
 	end
@@ -63,11 +70,15 @@ function pet_spawn.spawn_orphan_baby(player, entry)
 		return
 	end
 
+	pet_nest.decorate(surface, storage.pet_spawn_point)
+
+	-- Spawn the orphaned pet.
 	local pet = surface.create_entity {
 		name = "pet-biter-baby",
 		position = pos,
-		force = player.force
+		force = game.forces["pet_orphan"]
 	}
+
 	pet.ai_settings.allow_destroy_when_commands_fail = false
 	pet.ai_settings.allow_try_return_to_spawner = false
 

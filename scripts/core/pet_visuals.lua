@@ -1,185 +1,230 @@
 local debug = require("scripts.util.debug")
+local pet_audio = require("scripts.core.pet_audio")
 
 local VC = require("scripts.constants.visuals") -- Visuals constants.
 
-pet_visuals = {}
+local pet_visuals = {}
 
--- Convert RGB values to normalized RGBA.
-local function rgb(r, g, b, a)
-	-- Only exists because I can't find a VS Code color preview extension for normalized RGBA values in Lua.
-	return {
-		r = r / 255,
-		g = g / 255,
-		b = b / 255,
-		a = a or 1
-	}
-end
-
--- TODO: Add queuing system so emotes do not visually overlap.
 local EMOTE_MAP = {
 	-- General emotes.
 	home = {
-		char = "A",
-		color = rgb(50, 0, 50)
+		sprite = "entity/biter-spawner"
 	},
 	sleeping = {
-		char = "D",
-		color = rgb(0, 0, 50)
+		sprite = "virtual-signal/signal-battery-low"
 	},
 	work = {
-		char = "E",
-		color = rgb(0, 50, 0)
+		sprite = "virtual-signal/signal-mining",
+		color = {
+			r = 1,
+			g = 0.5,
+			b = 0,
+			a = 1
+		}
 	},
 	investigate = {
-		char = "L",
-		color = rgb(50, 0, 50)
+		sprite = "virtual-signal/signal-info"
 	},
 	tired = {
-		char = "X",
-		color = rgb(0, 50, 0)
+		sprite = "virtual-signal/signal-battery-mid-level"
 	},
 	alert = {
-		char = "1",
-		color = rgb(50, 50, 0)
+		sprite = "virtual-signal/signal-alert"
 	},
-
 	-- Combat emotes.
 	attack = {
-		char = "B",
-		color = rgb(50, 0, 0)
+		sprite = "item/submachine-gun"
 	},
 	stay = {
-		char = "C",
-		color = rgb(0, 50, 0)
+		sprite = "virtual-signal/signal-map-marker"
 	},
 	biter = {
-		char = "F",
-		color = rgb(50, 50, 0)
+		sprite = "entity/medium-biter"
 	},
 	fire = {
-		char = "I",
-		color = rgb(50, 0, 0)
+		sprite = "virtual-signal/signal-fire",
+		color = {
+			r = 1,
+			g = 0.2,
+			b = 0,
+			a = 1
+		}
 	},
 	defend = {
-		char = "J",
-		color = rgb(0, 50, 50)
+		sprite = "entity/character"
 	},
 	patrol = {
-		char = "K",
-		color = rgb(0, 50, 50)
+		sprite = "virtual-signal/signal-white-flag",
+		color = {
+			r = 0,
+			g = 0,
+			b = 0.8,
+			a = 1
+		}
 	},
 	scared = {
-		char = "T",
-		color = rgb(50, 50, 0)
+		sprite = "virtual-signal/signal-ghost",
+		color = {
+			r = 0.1,
+			g = 0.8,
+			b = 0.1,
+			a = 1
+		}
 	},
-
 	-- Feeding emotes.
 	hungry = {
-		char = "H",
-		color = rgb(50, 50, 0)
+		sprite = "item/raw-fish"
 	},
-	sick = {
-		char = "V",
-		color = rgb(0, 50, 0)
+	thirsty = {
+		sprite = "fluid/water"
 	},
-
+	morphing = {
+		sprite = "virtual-signal/signal-radioactivity"
+	},
 	-- Boredom emotes.
 	bored = {
-		char = "W",
-		color = rgb(0, 0, 50)
+		sprite = "virtual-signal/signal-hourglass",
+		color = {
+			r = 0,
+			g = 1,
+			b = 1,
+			a = 1
+		}
 	},
 	play = {
-		char = "2",
-		color = rgb(0, 50, 0)
+		sprite = "item/wood"
 	},
 	mischievous = {
-		char = "S",
-		color = rgb(50, 0, 0)
+		sprite = "item/explosives"
 	},
 	confused = {
-		char = "U",
-		color = rgb(0, 0, 50)
+		sprite = "entity/atomic-bomb-wave"
 	},
-
 	-- Sadness emotes.
 	ecstatic = {
-		char = "R",
-		color = rgb(0, 50, 0)
+		sprite = "virtual-signal/signal-skull" -- Placeholder.
 	},
 	very_happy = {
-		char = "O",
-		color = rgb(0, 50, 0)
+		sprite = "virtual-signal/signal-skull" -- Placeholder.
 	},
 	happy = {
-		char = "P",
-		color = rgb(0, 50, 50)
+		sprite = "virtual-signal/signal-skull" -- Placeholder.
 	},
 	sad = {
-		char = "Q",
-		color = rgb(50, 0, 0)
+		sprite = "virtual-signal/signal-skull" -- Placeholder.
 	},
 	crying = {
-		char = "Z",
-		color = rgb(255, 255, 255)
+		sprite = "virtual-signal/signal-skull" -- Placeholder.
 	},
-
 	-- Loyalty emotes.
 	love = {
-		char = "M",
-		color = rgb(200, 0, 0)
+		sprite = "virtual-signal/signal-heart"
 	},
 	gift = {
-		char = "G",
-		color = rgb(0, 50, 0)
+		sprite = "item/wooden-chest"
 	},
 	hurt = {
-		char = "N",
-		color = rgb(200, 0, 0)
+		sprite = "entity/behemoth-biter-die"
 	},
 	angry = {
-		char = "Y",
-		color = rgb(50, 0, 0)
+		sprite = "fluid/steam"
 	}
 }
 
-function pet_visuals.emote(pet, key)
+function pet_visuals.emote(player_index, entry, key, play_audio)
+
+	local pet = entry.unit
 	local data = EMOTE_MAP[key]
-	local text = (data and data.char) or key
-	local color = (data and data.color) or rgb(0, 0, 0)
-	local render_id = pet_visuals.show_pet_reaction(pet, text, color)
+	local sprite = (data and data.sprite) or key
+	local color = (data and data.color) or {
+		r = 1,
+		g = 1,
+		b = 1,
+		a = 1
+	}
+
+	local render_id = pet_visuals.show_pet_reaction(pet, sprite, color)
+
+	if play_audio then
+		pet_audio.play_for_size(player_index, entry)
+	end
+
 	return render_id
 end
 
-function pet_visuals.show_pet_reaction(pet, text, color)
+function pet_visuals.show_pet_reaction(pet, sprite, color)
 	if not (pet and pet.valid) then
 		return
 	end
-	local color = color or rgb(0, 0, 0)
-	local render_id = rendering.draw_text {
-		text = text,
-		surface = pet.surface,
-		target = pet,
-		scale = VC.EMOTE_SCALE,
-		font = "biter-pet-emotes",
-		alignment = "center",
-		vertical_alignment = "bottom",
-		use_rich_text = true,
-		color = color
+
+	local target = {
+		entity = pet,
+		offset = {0, VC.EMOTE_VERTICAL_OFFSET}
 	}
 
-	if drift ~= 0 then
-		-- Store drift info so on_tick can animate it.
-		storage.pet_reaction_drift = storage.pet_reaction_drift or {}
-		table.insert(storage.pet_reaction_drift, {
-			id = render_id,
-			color = color,
-			fade = VC.EMOTE_FADE_RATE,
-			pet = pet,
-			drift = VC.EMOTE_DRIFT_RATE,
-			start_tick = game.tick
-		})
-	end
+	local render_id = rendering.draw_sprite {
+		sprite = sprite,
+		target = target,
+		tint = color,
+		surface = pet.surface,
+		x_scale = VC.EMOTE_SCALE,
+		y_scale = VC.EMOTE_SCALE
+	}
+
+	local light_id = rendering.draw_light {
+		sprite = "utility/light_small",
+		target = target,
+		surface = pet.surface,
+		intensity = 0.5,
+		scale = 0.4
+	}
+
+	storage.pet_emote_anim_queue = storage.pet_emote_anim_queue or {}
+	table.insert(storage.pet_emote_anim_queue, {
+		id = render_id,
+		color = color,
+		target = target,
+		fade = VC.EMOTE_FADE_RATE,
+		pet = pet,
+		start_tick = game.tick,
+		light_id = light_id
+	})
 	return render_id
+end
+
+function pet_visuals.animate_pet_reaction_icon()
+	-- Pet reaction animations and lighting.
+	local peaq = storage.pet_emote_anim_queue
+	if not peaq or #peaq == 0 then
+		return
+	end
+
+	for i = #peaq, 1, -1 do
+		local render = peaq[i]
+
+		if not (render.id and render.id.valid) then
+			table.remove(peaq, i)
+		else
+			local age = game.tick - render.start_tick
+			local dec_value = math.max(0, render.color.a - age * render.fade)
+			
+			-- Fade out sprite.
+			render.color = {
+				r = render.color.r,
+				g = render.color.g,
+				b = render.color.b,
+				a = dec_value
+			}
+			render.light_id.intensity = math.max(0, dec_value)
+			
+			-- Destroy sprite and light source if they're invisible.
+			if dec_value <= 0 then
+				render.id.destroy()
+				render.light_id.destroy()
+				table.remove(peaq, i)
+			end
+		end
+	end
 end
 
 return pet_visuals
