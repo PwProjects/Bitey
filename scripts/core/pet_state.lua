@@ -81,14 +81,14 @@ function pet_state.queue_emote(player_index, pet, emote)
 	end
 end
 
-function pet_state.start_next_forced_emote(player_index, entry)
+function pet_state.start_next_forced_emote(player_index, entry, fast_render)
 	local es = ensure_queue(player_index)
 	local next_emote = table.remove(es.forced_queue, 1)
 	if not next_emote then
 		return
 	end
 
-	local sprite_render = pet_visuals.emote(player_index, entry, next_emote, true)
+	local sprite_render = pet_visuals.emote(player_index, entry, next_emote, fast_render)
 	es.sprite_render = sprite_render
 	es.active_emote = next_emote
 	es.active_type = "forced"
@@ -111,7 +111,7 @@ function pet_state.on_emote_finished(player_index, entry)
 	-- Otherwise, mood emotes will be handled by tick_emotes().
 end
 
-function pet_state.force_emote(player_index, entry, emote)
+function pet_state.force_emote(player_index, entry, emote, fast_render)
 	local es = ensure_queue(player_index)
 
 	-- Destroy any mood emote render to clear way for event-driven emote.
@@ -136,7 +136,7 @@ function pet_state.force_emote(player_index, entry, emote)
 	-- If nothing is active, fire emote immediately.
 	if not es.active_type then
 		debug.info("Queuing next forced emote: " .. emote)
-		pet_state.start_next_forced_emote(player_index, entry)
+		pet_state.start_next_forced_emote(player_index, entry, fast_render)
 	end
 end
 
@@ -346,8 +346,8 @@ function pet_state.ate_food(player_index, entry, food_value)
 	s.sadness = math.max(0, s.sadness - FC.FOOD_SADNESS_MODIFIER - satiation_mood_modifier)
 	s.boredom = math.max(0, s.boredom - FC.FOOD_BOREDOM_MODIFIER - satiation_mood_modifier)
 
-	pet_state.force_emote(player_index, entry, "love")
-	pet_state.force_emote(player_index, entry, "defend")
+	pet_state.force_emote(player_index, entry, "love", true)
+	pet_state.force_emote(player_index, entry, "defend", false, false)
 end
 
 -- Boredom functions.

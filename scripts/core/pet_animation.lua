@@ -7,7 +7,7 @@ local pet_animation = {}
 
 function pet_animation.animate_pet_reaction_icon()
 	-- Pet reaction animations and lighting.
-	if game.tick % 5 ~= 0 then
+	if game.tick % 2 ~= 0 then
 		return
 	end
 
@@ -27,9 +27,9 @@ function pet_animation.animate_pet_reaction_icon()
 			local dec_value = math.max(0, sprite_render.sprite.color.a - age * VC.EMOTE_FADE_RATE)
 			local dec_l_value = math.max(0, sprite_render.light.intensity - age * VC.EMOTE_LIGHT_FADE_RATE)
 
-			if sprite_render.forced then
-				dec_value = dec_value * 2
-				dec_l_value = dec_l_value * 2
+			if sprite_render.fast_render then
+				dec_value = dec_value / VC.EMOTE_FORCED_MODIFIER
+				dec_l_value = dec_l_value / VC.EMOTE_FORCED_MODIFIER
 			end
 
 			-- Don't touch this again or you'll be here for hours.

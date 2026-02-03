@@ -12,7 +12,7 @@ dbg.level = {
 }
 
 -- Default debug level.
-dbg.current_level = dbg.level.trace
+dbg.current_level = dbg.level.none
 
 local last_print_tick = {}
 

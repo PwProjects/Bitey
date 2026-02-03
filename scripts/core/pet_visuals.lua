@@ -102,20 +102,19 @@ local EMOTE_MAP = {
 	}
 }
 
-function pet_visuals.emote(player_index, entry, emote, forced)
-	local forced = forced or false
+function pet_visuals.emote(player_index, entry, emote, fast_render)
 	local pet = entry.unit
 	local data = EMOTE_MAP[emote]
 	local sprite = (data and data.sprite) or emote
 
-	local sprite_render = pet_visuals.show_pet_reaction(player_index, entry, sprite, forced)
+	local sprite_render = pet_visuals.show_pet_reaction(player_index, entry, sprite, fast_render)
 
 	pet_audio.play_for_size(player_index, entry)
 
 	return sprite_render
 end
 
-function pet_visuals.show_pet_reaction(player_index, entry, sprite, forced)
+function pet_visuals.show_pet_reaction(player_index, entry, sprite, fast_render)
 	if not (entry and entry.unit and entry.unit.valid) then
 		return
 	end
@@ -129,7 +128,7 @@ function pet_visuals.show_pet_reaction(player_index, entry, sprite, forced)
 		entity = pet,
 		offset = {0, VC.EMOTE_VERTICAL_OFFSET}
 	}
-
+	debug.info("Sprite: " .. sprite .. " - Fast render: " .. tostring(fast_render))
 	local sprite_id = rendering.draw_sprite {
 		sprite = sprite,
 		target = target,
@@ -161,7 +160,7 @@ function pet_visuals.show_pet_reaction(player_index, entry, sprite, forced)
 		fade = VC.EMOTE_FADE_RATE,
 		player_index = player_index,
 		entry = entry,
-		forced = forced or false
+		fast_render = fast_render
 	}
 
 	storage.pet_emote_sprite_queue = storage.pet_emote_sprite_queue or {}
