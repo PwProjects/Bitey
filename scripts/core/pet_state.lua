@@ -15,6 +15,10 @@ local function ensure_state(player_index)
 	storage.pet_state = storage.pet_state or {}
 	local s = storage.pet_state[player_index]
 
+	-- TODO: Change sadness to happiness and alter constants to reflect reversal.
+	-- TODO: Change loyalty to friendship, as it will be more applicable to future features.
+	-- TODO: Add evolution value.
+	-- TODO: Add morph value.
 	if not s then
 		-- Brand new pet state.
 		s = {
@@ -22,6 +26,7 @@ local function ensure_state(player_index)
 			loyalty = 0,
 			sadness = 100,
 			boredom = 0,
+			thirst = 100,
 			feeding_target = nil
 		}
 		storage.pet_state[player_index] = s
@@ -44,9 +49,10 @@ local function ensure_queue(player_index)
 	if not es then
 		es = {
 			queue = {},
+			forced_queue = {},
 			active_emote = nil,
 			ends_at_tick = nil,
-			render_id = nil
+			render_ids = nil
 		}
 		storage.emote_state[player_index] = es
 	end
@@ -75,20 +81,62 @@ function pet_state.queue_emote(player_index, pet, emote)
 	end
 end
 
+function pet_state.start_next_forced_emote(player_index, entry)
+	local es = ensure_queue(player_index)
+	local next_emote = table.remove(es.forced_queue, 1)
+	if not next_emote then
+		return
+	end
+
+	local sprite_render = pet_visuals.emote(player_index, entry, next_emote)
+	es.sprite_render = sprite_render
+	es.active_emote = next_emote
+	es.active_type = "forced"
+	-- TODO: Figure how long emote is and create constant.
+	-- es.ends_at_tick = game.tick + (EMOTE_DURATION or 60)
+	es.ends_at_tick = game.tick + 60
+end
+
+function pet_state.on_emote_finished(player_index, entry)
+	local es = ensure_queue(player_index)
+
+	-- If this was a forced emote, start the next one immediately
+	if es.active_type == "forced" then
+		es.active_emote = nil
+		es.active_type = nil
+		es.ends_at_tick = nil
+
+		pet_state.start_next_forced_emote(player_index, entry)
+		return
+	end
+
+	-- Otherwise, mood emotes will be handled by tick_emotes()
+end
+
 function pet_state.force_emote(player_index, entry, emote)
 	local es = ensure_queue(player_index)
-	local now = game.tick
 
 	-- Destroy any existing emote render.
-	if es.render_id then
-		es.render_id.destroy()
-		es.render_id = nil
+	if es.sprite_render then
+		local s_obj = rendering.get_object_by_id(es.sprite_render.id)
+		s_obj.destroy()
+		local l_obj = rendering.get_object_by_id(es.sprite_render.light_id)
+		l_obj.destroy()
+		es.sprite_render = nil
 	end
+
+	es.active_emote = nil
+	es.ends_at_tick = nil
 
 	-- Clear current emote queue.
 	es.queue = {}
 
-	pet_visuals.emote(player_index, entry, emote)
+	table.insert(es.forced_queue, emote)
+
+	-- If nothing is active, fire emote immediately.
+	if not es.active_type then
+		pet_state.start_next_forced_emote(player_index, entry)
+	end
 end
 
 local function tick_emotes(player_index, entry)
@@ -116,6 +164,7 @@ local function tick_emotes(player_index, entry)
 		local render_id = pet_visuals.emote(player_index, entry, next_emote)
 		es.render_id = render_id
 		es.active_emote = next_emote
+		-- TODO: Create duration constant.
 		es.ends_at_tick = now + (EMOTE_DURATION or 60)
 	end
 end
@@ -288,7 +337,6 @@ function pet_state.get_feeding_target(player_index)
 end
 
 function pet_state.ate_food(player_index, entry, food_value)
-	local emote = "love"
 	local fv = food_value or FC.FOOD_DEFAULT_SATIATION_VALUE
 	local s = ensure_state(player_index)
 	local satiation_mood_modifier = math.floor((s.hunger ^ 1.2) * 0.05)
@@ -298,7 +346,8 @@ function pet_state.ate_food(player_index, entry, food_value)
 	s.sadness = math.max(0, s.sadness - FC.FOOD_SADNESS_MODIFIER - satiation_mood_modifier)
 	s.boredom = math.max(0, s.boredom - FC.FOOD_BOREDOM_MODIFIER - satiation_mood_modifier)
 
-	pet_state.force_emote(player_index, entry, emote)
+	pet_state.force_emote(player_index, entry, "love")
+	pet_state.force_emote(player_index, entry, "defend")
 end
 
 -- Boredom functions.

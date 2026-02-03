@@ -5,6 +5,8 @@ local pet_state = require("scripts.core.pet_state")
 local pet_spawn = require("scripts.core.pet_spawn")
 local pet_events = require("scripts.core.pet_events")
 local pet_visuals = require("scripts.core.pet_visuals")
+local pet_animation = require("scripts.core.pet_animation")
+
 
 local VC = require("scripts.constants.visuals") -- Visuals constants.
 
@@ -74,7 +76,7 @@ end
 
 function events.on_tick(event)
 	pet_lifecycle.on_tick(event)
-	pet_visuals.animate_pet_reaction_icon()
+	pet_animation.animate_pet_reaction_icon()
 end
 
 function events.on_entity_died(event)
