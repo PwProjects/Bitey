@@ -20,7 +20,6 @@ function events.on_init()
 	storage.emote_state = {}
 
 	-- TODO: Maybe move logic below to pet_events module or somewhere more appropriate.
-	-- Create neutral game force and add orphan to it.
 	if not game.forces["pet_orphan"] then
 		game.create_force("pet_orphan")
 	end
@@ -46,7 +45,6 @@ function events.on_configuration_changed(cfg)
 	storage.emote_state = storage.emote_state or {}
 
 	-- TODO: Maybe move logic below to pet_events module or somewhere more appropriate.
-	-- Create neutral game force and add orphan to it.
 	if not game.forces["pet_orphan"] then
 		game.create_force("pet_orphan")
 	end

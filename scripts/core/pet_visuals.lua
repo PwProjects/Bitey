@@ -12,16 +12,16 @@ local EMOTE_MAP = {
 		sprite = "entity/biter-spawner"
 	},
 	sleeping = {
-		sprite = "virtual-signal/signal-battery-low"
+		sprite = "sleeping"
 	},
 	work = {
 		sprite = "virtual-signal/signal-mining"
 	},
 	investigate = {
-		sprite = "virtual-signal/signal-info"
+		sprite = "investigate"
 	},
 	tired = {
-		sprite = "virtual-signal/signal-battery-mid-level"
+		sprite = "virtual-signal/signal-battery-low"
 	},
 	alert = {
 		sprite = "virtual-signal/signal-alert"
@@ -46,7 +46,7 @@ local EMOTE_MAP = {
 		sprite = "virtual-signal/signal-white-flag"
 	},
 	scared = {
-		sprite = "virtual-signal/signal-ghost"
+		sprite = "scared"
 	},
 	-- Feeding emotes.
 	hungry = {
@@ -60,32 +60,35 @@ local EMOTE_MAP = {
 	},
 	-- Boredom emotes.
 	bored = {
-		sprite = "virtual-signal/signal-hourglass"
+		sprite = "bored"
 	},
 	play = {
 		sprite = "item/wood"
 	},
 	mischievous = {
-		sprite = "item/explosives"
+		sprite = "silly"
 	},
 	confused = {
-		sprite = "entity/atomic-bomb-wave"
+		sprite = "confused"
+	},
+	playing_dead = {
+		sprite = "playing-dead"
 	},
 	-- Sadness emotes.
 	ecstatic = {
-		sprite = "virtual-signal/signal-skull" -- Placeholder.
+		sprite = "ecstatic" -- Placeholder.
 	},
 	very_happy = {
-		sprite = "virtual-signal/signal-skull" -- Placeholder.
+		sprite = "very-happy" -- Placeholder.
 	},
 	happy = {
-		sprite = "virtual-signal/signal-skull" -- Placeholder.
+		sprite = "happy" -- Placeholder.
 	},
 	sad = {
-		sprite = "virtual-signal/signal-skull" -- Placeholder.
+		sprite = "sad" -- Placeholder.
 	},
-	crying = {
-		sprite = "virtual-signal/signal-skull" -- Placeholder.
+	very_sad = {
+		sprite = "very-sad" -- Placeholder.
 	},
 	-- Loyalty emotes.
 	love = {
@@ -98,7 +101,7 @@ local EMOTE_MAP = {
 		sprite = "entity/behemoth-biter-die"
 	},
 	angry = {
-		sprite = "fluid/steam"
+		sprite = "angry"
 	}
 }
 

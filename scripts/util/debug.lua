@@ -12,7 +12,7 @@ dbg.level = {
 }
 
 -- Default debug level.
-dbg.current_level = dbg.level.none
+dbg.current_level = dbg.level.info
 
 local last_print_tick = {}
 
@@ -69,7 +69,7 @@ local function log(level, message)
 
 	local module_info = get_caller_module()
 	local tick = game and game.tick or 0
-	local prefix = string.format("[BP][%s][%d][%s][%s] ", (level == dbg.level.error and "ERROR") or (level == dbg.level.warn and "WARN") or
+	local prefix = string.format("%s[%s][%d][%s][%s] ", DC.MOD_ICON, (level == dbg.level.error and "ERROR") or (level == dbg.level.warn and "WARN") or
 			(level == dbg.level.info and "INFO") or "TRACE", tick, module_info.filename, module_info.func)
 
 	safe_print(module_info.filename, prefix .. tostring(message))

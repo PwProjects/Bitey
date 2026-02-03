@@ -242,7 +242,7 @@ function pet_state.calculate_mood(player_index)
 		mood_table[#mood_table + 1] = "angry"
 	end
 	if s.sadness >= MC.DEPRESSED then
-		mood_table[#mood_table + 1] = "crying"
+		mood_table[#mood_table + 1] = "very-sad"
 	end
 	if s.loyalty >= MC.DEVOTED then
 		mood_table[#mood_table + 1] = "love"
@@ -276,7 +276,7 @@ function pet_state.calculate_mood(player_index)
 		mood_table[#mood_table + 1] = "investigate"
 	end
 	if s.sadness >= MC.HAPPY then
-		mood_table[#mood_table + 1] = "very_happy"
+		mood_table[#mood_table + 1] = "very-happy"
 	end
 	if s.loyalty >= MC.FRIENDLY then
 		mood_table[#mood_table + 1] = "love"
