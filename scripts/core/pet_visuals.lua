@@ -8,39 +8,36 @@ local pet_visuals = {}
 
 local EMOTE_MAP = {
 	-- General emotes.
+	alert = {
+		sprite = "virtual-signal/signal-alert"
+	},
 	home = {
 		sprite = "entity/biter-spawner"
-	},
-	sleeping = {
-		sprite = "sleeping"
-	},
-	work = {
-		sprite = "virtual-signal/signal-mining"
 	},
 	investigate = {
 		sprite = "investigate"
 	},
+	sleeping = {
+		sprite = "sleeping"
+	},
 	tired = {
 		sprite = "virtual-signal/signal-battery-low"
 	},
-	alert = {
-		sprite = "virtual-signal/signal-alert"
+	work = {
+		sprite = "virtual-signal/signal-mining"
 	},
 	-- Combat emotes.
 	attack = {
 		sprite = "item/submachine-gun"
 	},
-	stay = {
-		sprite = "virtual-signal/signal-map-marker"
-	},
 	biter = {
 		sprite = "entity/medium-biter"
 	},
-	fire = {
-		sprite = "virtual-signal/signal-fire"
-	},
 	defend = {
 		sprite = "entity/character"
+	},
+	fire = {
+		sprite = "virtual-signal/signal-fire"
 	},
 	patrol = {
 		sprite = "virtual-signal/signal-white-flag"
@@ -48,28 +45,34 @@ local EMOTE_MAP = {
 	scared = {
 		sprite = "scared"
 	},
+	stay = {
+		sprite = "virtual-signal/signal-map-marker"
+	},
 	-- Feeding emotes.
 	hungry = {
 		sprite = "item/raw-fish"
 	},
-	thirsty = {
-		sprite = "fluid/water"
-	},
 	morphing = {
 		sprite = "virtual-signal/signal-radioactivity"
+	},
+	sick = {
+		sprite = "sick"
+	},
+	thirsty = {
+		sprite = "fluid/water"
 	},
 	-- Boredom emotes.
 	bored = {
 		sprite = "bored"
 	},
-	play = {
-		sprite = "item/wood"
+	confused = {
+		sprite = "confused"
 	},
 	mischievous = {
 		sprite = "silly"
 	},
-	confused = {
-		sprite = "confused"
+	play = {
+		sprite = "item/wood"
 	},
 	playing_dead = {
 		sprite = "playing-dead"
@@ -91,8 +94,8 @@ local EMOTE_MAP = {
 		sprite = "very-sad" -- Placeholder.
 	},
 	-- Friendship emotes.
-	love = {
-		sprite = "virtual-signal/signal-heart"
+	angry = {
+		sprite = "angry"
 	},
 	gift = {
 		sprite = "item/wooden-chest"
@@ -100,8 +103,8 @@ local EMOTE_MAP = {
 	hurt = {
 		sprite = "entity/behemoth-biter-die"
 	},
-	angry = {
-		sprite = "angry"
+	love = {
+		sprite = "virtual-signal/signal-heart"
 	}
 }
 

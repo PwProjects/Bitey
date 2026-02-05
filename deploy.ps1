@@ -7,14 +7,14 @@ $json = Get-Content $info -Raw | ConvertFrom-Json
 
 $parts = $json.version.Split('.')
 $major = [int]$parts[0]
-$minor = [int]$parts[1] + 1
-$patch = [int]$parts[2]
+$minor = [int]$parts[1]
+$patch = [int]$parts[2] + 1
 
 $json.version = "$major.$minor.$patch"
 $json | ConvertTo-Json -Depth 10 | Set-Content $info
 
 Clear-Host
-Write-Host "$esc[1;32mVersion$esc[0m: Updated to $esc[1;36m$($json.version)$esc[0m"
+Write-Host "$esc[1;32mVersion$esc[0m: Bitey updated to $esc[1;36m$($json.version)$esc[0m"
 
 if (Test-Path $dest) {
 	Remove-Item $dest -Recurse -Force
@@ -22,5 +22,5 @@ if (Test-Path $dest) {
 Copy-Item $src $dest -Recurse -Force
 Remove-Item (Join-Path $dest "deploy.ps1") -ErrorAction SilentlyContinue
 
-Write-Host "$esc[1;32mSuccess$esc[0m: Folder synchronization complete!"
-Write-Host "$esc[1;31mNote$esc[0m: Debugging $esc[1;4mrate limiter$esc[0m may suppress log spam."
+Write-Host "$esc[1;32mSuccess$esc[0m: Source synchronization complete!"
+Write-Host "$esc[1;31mNote$esc[0m: Debugging $esc[1;4mrate limiter$esc[0m may suppress debug console spam."

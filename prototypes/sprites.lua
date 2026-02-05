@@ -81,6 +81,14 @@ data:extend({
   },
   {
     type = "sprite",
+    name = "sick",
+    filename = "__biter-pet__/graphics/sick.png",
+    size = 64,
+    mipmap_count = 4,
+	scale = 0.5
+  },
+  {
+    type = "sprite",
     name = "silly",
     filename = "__biter-pet__/graphics/silly.png",
     size = 64,

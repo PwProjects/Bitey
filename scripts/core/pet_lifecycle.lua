@@ -18,6 +18,9 @@ local LC = require("scripts.constants.lifecycle") -- Pet lifecycle constants.
 local BM = require("scripts.constants.biters") -- Pet tier to biter map.
 local TF = require("scripts.constants.text_format") -- Text color constants.
 
+local FC = require("scripts.constants.food") -- Food constants.
+local FOOD_DEFINITIONS = FC.FOOD_DEFINITIONS
+
 local pet_lifecycle = {}
 
 function pet_lifecycle.get_pet_entry(player_index)
@@ -37,7 +40,7 @@ function pet_lifecycle.get_pet_entry(player_index)
 	return storage.biter_pet[player_index]
 end
 
-local function find_nearest_fish(pet)
+local function find_nearest_food(pet)
 	if not (pet and pet.valid) then
 		return nil
 	end
@@ -56,11 +59,16 @@ local function find_nearest_fish(pet)
 	local best_distance = math.huge
 
 	for _, item in ipairs(items) do
-		if item.valid and item.stack and item.stack.name == "raw-fish" then
-			local d = position_util.distance(pos, item.position)
-			if d < best_distance then
-				best_distance = d
-				nearest = item
+		if item.valid and item.stack and item.stack.valid_for_read then
+			local name = item.stack.name
+
+			local food_type = FOOD_DEFINITIONS[name]
+			if food_type then
+				local d = position_util.distance(pos, item.position)
+				if d < best_distance then
+					best_distance = d
+					nearest = item
+				end
 			end
 		end
 	end
@@ -82,23 +90,30 @@ local function handle_feeding_behavior(player_index, player, pet, entry)
 	end
 
 	-- Check if pet is near edible food.
-	local dx = pet.position.x - target.position.x
-	local dy = pet.position.y - target.position.y
-	local dist_sq = dx * dx + dy * dy
+	-- TODO: Replace with position utility.
+	local distance = position_util.distance(pet.position, target.position)
 
-	if dist_sq <= (LC.EAT_RADIUS * LC.EAT_RADIUS) then
-
-		-- Stop moving.
+	if distance <= (LC.EAT_RADIUS * LC.EAT_RADIUS) then
 		pet.commandable.set_command {
 			type = defines.command.stop,
 			distraction = defines.distraction.none
 		}
 
+		local stack = target.stack
+		local food_item = stack.name
+		local food = FOOD_DEFINITIONS[food_item]
+
+		if not food then
+			pet_state.set_feeding_target(player_index, nil)
+			return false
+		end
+
 		-- Eat the food.
+		-- TODO: See if stack is actually necessary.
 		local amount = target.stack.count
 		target.destroy()
 
-		pet_state.ate_good_food(player_index, entry)
+		pet_state.ate_food(player_index, entry, food_item)
 		pet_state.set_feeding_target(player_index, nil)
 		return true
 	end
@@ -177,7 +192,7 @@ end
 
 function pet_lifecycle.evaluate_target(player_index, pet, target)
 	if not (target and target.valid) then
-		target = find_nearest_fish(pet)
+		target = find_nearest_food(pet)
 		if target then
 			pet_state.set_feeding_target(player_index, target)
 			pet_state.set_state(player_index, "seek_food")
