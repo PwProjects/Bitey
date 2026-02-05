@@ -17,11 +17,11 @@ function pet_spawn.choose_orphan_spawn(surface, origin)
 		attempts = attempts + 1
 
 		local angle = math.random() * math.pi * 2
-		local dist = SC.MINIMUM_SPAWN_DISTANCE + math.random() ^ 0.5 * SC.MAXIMUM_SPAWN_OFFSET
+		local distance = SC.MINIMUM_SPAWN_DISTANCE + math.random() ^ 0.5 * SC.MAXIMUM_SPAWN_OFFSET
 
 		local pos = {
-			x = origin.x + math.cos(angle) * dist,
-			y = origin.y + math.sin(angle) * dist
+			x = origin.x + math.cos(angle) * distance,
+			y = origin.y + math.sin(angle) * distance
 		}
 
 		-- Ensure chunks exist for spawning.

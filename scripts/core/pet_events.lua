@@ -1,10 +1,10 @@
 local debug = require("scripts.util.debug")
 local notifications = require("scripts.util.notifications")
 local position = require("scripts.util.position")
+local audio = require("scripts.util.audio")
 
 local EC = require("scripts.constants.events") -- Event constants.
 local BM = require("scripts.constants.biters") -- Pet tier to biter map.
-
 
 local pet_events = {}
 
@@ -28,7 +28,7 @@ local function process_intro_notification(player_index, entry)
 		entry.intro_pet_alert_threshold = random_delay
 	end
 
-	-- TODO: Change this from an alert to a goal.
+	-- TODO: Change this from an alert to a goal... maybe... (or not).
 	if entry.intro_end_tick and not entry.intro_notification_sent then
 		if now > entry.intro_pet_alert_threshold then
 			local direction = position.get_direction_of_position(player.position, pet.position)
@@ -37,8 +37,15 @@ local function process_intro_notification(player_index, entry)
 				name = BM[entry.biter_tier_friendly_name].game_eq
 			}, "You hear a strange noise coming from the " .. direction .. ".")
 			entry.intro_notification_sent = true
+			audio.play_global_sound(player, "intro-spitter-death-call")
+			player.force.chart(pet.surface, {{pet.position.x - 4, pet.position.y - 4}, {pet.position.x + 4, pet.position.y + 4}})
+			player.force.add_chart_tag(pet.surface, {
+				position = pet.position,
+				icon = {type="virtual", name="signal-deny"}
+			})
 		end
 	end
+
 end
 
 function pet_events.process_events(player_index, entry)

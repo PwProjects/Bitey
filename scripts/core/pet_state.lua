@@ -2,7 +2,7 @@
 -- TODO: Implement thirst.
 local debug = require("scripts.util.debug")
 local pet_visuals = require("scripts.core.pet_visuals")
-local text = require("scripts.util.text_format")
+local t = require("scripts.util.text_format")
 
 local HC = require("scripts.constants.hunger") -- Hunger constants.
 local FC = require("scripts.constants.food") -- Food constants.
@@ -179,7 +179,7 @@ function pet_state.tick_pet_state(player_index, entry)
 	if now >= s.next_hunger_tick then
 
 		-- Increment hunger.
-		s.hunger = math.min(100, s.hunger + HC.HUNGER_INCREMENT)
+		pet_state.add_hunger(player_index, HC.HUNGER_INCREMENT)
 		s.next_hunger_tick = now + HC.HUNGER_GAIN_INTERVAL -- Schedule next hunger increase.
 
 		-- Update mood based on stats
@@ -238,15 +238,10 @@ function pet_state.calculate_mood(player_index)
 
 	local mood_table = {}
 	-- All pet needs are met and stats are above average.
-	if (
-		s.hunger < MC.CONTENT and
-		s.boredom < MC.ALERT and
-		s.happiness > MC.HAPPY and
-		s.friendship > MC.DEVOTED
-	) then
-		mood_table[#mood_table + 1] = "ecstatic" 
+	if (s.hunger < MC.CONTENT and s.boredom < MC.ALERT and s.happiness > MC.HAPPY and s.friendship > MC.DEVOTED) then
+		mood_table[#mood_table + 1] = "ecstatic"
 		return pick_random_mood(player_index, mood_table)
-	end 
+	end
 
 	-- Extreme states.
 	if s.hunger >= MC.STARVING then
@@ -337,7 +332,11 @@ end
 
 function pet_state.add_hunger(player_index, delta)
 	local s = ensure_state(player_index)
-	s.hunger = math.max(0, math.min(100, s.hunger + delta))
+	delta = delta or HC.HUNGER_INCREMENT
+	local new_hunger = math.max(0, math.min(100, s.hunger + (delta)))
+
+	debug.info(string.format("Hunger %s from %s to %s.", (delta > 0 and "increased") or "decreased",s.hunger, new_hunger))
+	s.hunger = new_hunger
 end
 
 function pet_state.set_feeding_target(player_index, entity)
@@ -351,12 +350,12 @@ function pet_state.get_feeding_target(player_index)
 end
 
 function pet_state.ate_food(player_index, entry, food_value)
-	local fv = food_value or FC.FOOD_DEFAULT_SATIATION_VALUE
 	local s = ensure_state(player_index)
 	local satiation_mood_modifier = math.floor((s.hunger ^ 1.2) * 0.05)
 
-	s.hunger = math.max(0, math.min(100, s.hunger - fv))
-	s.friendship = math.min(100, s.friendship + FC.FOOD_FRIENDSHIP_MODIFIER + satiation_mood_modifier)
+
+	pet_state.add_hunger(player_index, FC.FOOD_DEFAULT_SATIATION_VALUE)
+	pet_state.add_friendship(player_index, FC.FOOD_FRIENDSHIP_MODIFIER + satiation_mood_modifier)
 	s.happiness = math.max(0, s.happiness - FC.FOOD_HAPPINESS_MODIFIER - satiation_mood_modifier)
 	s.boredom = math.max(0, s.boredom - FC.FOOD_BOREDOM_MODIFIER - satiation_mood_modifier)
 
@@ -457,7 +456,10 @@ end
 
 function pet_state.add_friendship(player_index, delta)
 	local s = ensure_state(player_index)
-	s.friendship = math.max(0, math.min(100, s.friendship + delta))
+	local new_friendship = math.max(0, math.min(100, s.friendship + delta))
+
+	debug.info(string.format("Friendship %s from %s to %s.", (delta > 0 and "increased") or "decreased", s.friendship, new_friendship))
+	s.friendship = new_friendship
 end
 
 -- Pause functions.
@@ -474,18 +476,17 @@ function pet_state.is_paused(player_index)
 	return s.pause_end_tick and game.tick < s.pause_end_tick
 end
 
--- TODO: Add new stats and format text.
--- Output pet information to console.
--- Boredom
--- Evolution
--- Friendship
--- Happiness
--- Hunger
--- Morph
--- Thirst
 function pet_state.debug_dump(player_index)
 	local s = ensure_state(player_index)
-	return string.format("[font=default-bold]\n\thunger=%d\n\tfriendship=%d\n\thappiness=%d\n\tboredom=%d[/font]", s.hunger, s.friendship, s.happiness, s.boredom)
+	local boredom = string.format("%s %s", t.fm("Boredeom:", "f"), t.fm(s.boredom, "m", 1))
+	local evolution = string.format("%s %s", t.fm("Evolution:", "f"), t.fm(s.evolution, "m", 1))
+	local friendship = string.format("%s %s", t.fm("Friendship:", "f"), t.fm(s.friendship, "m", 1))
+	local happiness = string.format("%s %s", t.fm("Happiness:", "f"), t.fm(s.happiness, "m", 1))
+	local hunger = string.format("%s %s", t.fm("Hunger:", "f"), t.fm(s.hunger, "m", 1))
+	local morph = string.format("%s %s", t.fm("Morph:", "f"), t.fm(s.morph, "m", 1))
+	local thirst = string.format("%s %s", t.fm("Thirst:", "f"), t.fm(s.thirst, "m", 1))
+	return string.format("%s\n%s\n%s\n%s\n%s\n%s\n%s", boredom, evolution, friendship,
+			happiness, hunger, morph, thirst)
 end
 
 return pet_state

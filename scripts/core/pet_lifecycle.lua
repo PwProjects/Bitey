@@ -1,6 +1,4 @@
 -- TODO: Move some functions out of this file and clean it up.
--- TODO: Map pet biter sizes to base game biter entities for notifications.
--- TODO: Create pet_sounds.lua for audio tied to biter size.
 -- TODO: Add small random chance for biter to investigate entity and pause for a second or two. This should take precedence over everything else.
 -- TODO: Player defense may be automatic based on force alliance, but test it out anyway.
 local debug = require("scripts.util.debug")
@@ -11,9 +9,12 @@ local pet_growth = require("scripts.core.pet_growth")
 local pet_spawn = require("scripts.core.pet_spawn")
 local notifications = require("scripts.util.notifications")
 local pet_events = require("scripts.core.pet_events")
+local t = require("scripts.util.text_format")
 
+local DC = require("scripts.constants.debug") -- Debug constants.
 local LC = require("scripts.constants.lifecycle") -- Pet lifecycle constants.
 local BM = require("scripts.constants.biters") -- Pet tier to biter map.
+local TF = require("scripts.constants.text_format") -- Text color constants.
 
 local pet_lifecycle = {}
 
@@ -50,13 +51,13 @@ local function find_nearest_fish(pet)
 	}
 
 	local nearest = nil
-	local best_dist = math.huge
+	local best_distance = math.huge
 
 	for _, item in ipairs(items) do
 		if item.valid and item.stack and item.stack.name == "raw-fish" then
 			local d = position_util.distance(pos, item.position)
-			if d < best_dist then
-				best_dist = d
+			if d < best_distance then
+				best_distance = d
 				nearest = item
 			end
 		end
@@ -183,9 +184,9 @@ function pet_lifecycle.evaluate_target(player_index, pet, target)
 end
 
 function pet_lifecycle.state_idle(player_index, player, pet, entry)
-	local dist = position_util.distance(pet.position, player.position)
+	local distance = position_util.distance(pet.position, player.position)
 	local radius = LC.FOLLOW_RADIUS_BY_TIER[pet.name] or LC.PET_FOLLOW_RADIUS
-	if dist > radius then
+	if distance > radius then
 		pet_state.set_state(player_index, "follow")
 		return
 	end
@@ -195,13 +196,7 @@ function pet_lifecycle.state_idle(player_index, player, pet, entry)
 	if entry.is_orphaned then
 		desintation = storage.pet_spawn_point
 	end
-	-- Resume idle behavior.
-	-- pet.commandable.set_command {
-	--     type = defines.command.wander,
-	--     radius = 4,
-	--     distraction = defines.distraction.none
-	-- }
-	-- Resume idle behvaior.
+
 	pet.commandable.set_command {
 		type = defines.command.go_to_location,
 		destination = destination,
@@ -249,15 +244,13 @@ function pet_lifecycle.handle_pause(player_index, entry, pet)
 	return false
 end
 
--- TODO: Store and retrieve entity name to update alert icon when biter evolves.
--- TODO: Store and retrieve entity name and type to update pet audio based on size.
 local function check_for_adoption(player, player_index, pet, entry)
 	local hunger = pet_state.get_hunger(player_index)
 	if entry.is_orphaned and hunger < LC.BONDING_HUNGER_THRESHOLD then
 		if math.random() < LC.CHANCE_TO_ADOPT_BITER then
 			entry.is_orphaned = false
 			pet.force = player.force
-			debug.info("Pet is now unorphaned.")
+			debug.info("Pet has been successfully adopted.")
 			notifications.notify(player, pet, {
 				type = "entity",
 				name = BM[entry.biter_tier_friendly_name].game_eq
@@ -314,26 +307,26 @@ function pet_lifecycle.state_eat(player_index, player, pet)
 end
 
 function pet_lifecycle.state_follow(player_index, player, pet, entry)
-	-- 1. Determine the target position
+	-- Determine the target position.
 	local target_pos
 	if entry.is_orphaned then
-		-- Fallback to current position if spawn point is missing to prevent crash
+		-- Fallback to current position if spawn point is missing to prevent crash.
 		target_pos = storage.pet_spawn_point or pet.position
 	else
 		target_pos = player.position
 	end
 
-	-- 2. Calculate distances
-	local dist = position_util.distance(pet.position, target_pos)
+	-- Calculate distances.
+	local distance = position_util.distance(pet.position, target_pos)
 	local radius = LC.FOLLOW_RADIUS_BY_TIER[pet.name] or LC.PET_FOLLOW_RADIUS
 
-	-- 3. If close enough, switch to idle
-	if dist <= radius then
+	-- If close switch to idle.
+	if distance <= radius then
 		pet_state.set_state(player_index, "idle")
 		return
 	end
 
-	-- 4. Move toward the relevant target
+	-- Move toward relevant target.
 	pet.commandable.set_command {
 		type = defines.command.go_to_location,
 		destination = target_pos,
@@ -367,30 +360,48 @@ function pet_lifecycle.on_entity_died(event)
 	end
 end
 
-function pet_lifecycle.print_status_for_players(player)
+function pet_lifecycle.debug_dump(player)
+	-- Valdidate player and pet.
 	if not (player and player.valid) then
-		game.print("[BP] No valid player.")
+		game.print(string.format("%s %s", DC.ICON, t.f("No valid player.", "l")))
 	end
 
 	storage.biter_pet = storage.biter_pet or {}
 	local entry = storage.biter_pet[player.index]
 
 	if not entry then
-		game.print("[BP] No pet entry for player.")
+		game.print(string.format("%s %s", DC.ICON, t.f("No pet entry for player.", "l")))
 		return
 	end
 
 	local pet = entry.unit
 	if not (pet and pet.valid) then
-		game.print("[BP] Pet is missing or invalid for player: " .. player.index)
+		game.print(string.format("%s %s %s\n", DC.ICON, t.f("Pet is missing or invalid for player:", "l"), t.f(player.index)))
 		return
 	end
 
-	local dist = position_util and position_util.distance and position_util.distance(pet.position, player.position) or "n/a"
+	-- Collect and preformat pet data.
+	local position = string.format("[gps=%s,%s]", pet.position.x, pet.position.y)
+	local distance = string.format("%.2f", position_util and position_util.distance and position_util.distance(pet.position, player.position) or "N/A")
+	local h_color = TF.FULL_HEALTH
 
-	game.print(string.format("[BP] Pet status for player %d: name=%s, type=%s, pos=(%.2f,%.2f), dist=%.2f, health=%.1f/%.1f", player.index,
-			pet.name or "<?>", pet.type or "<?>", pet.position.x, pet.position.y, tostring(dist), pet.health or -1,
-			pet.prototype and pet.prototype.get_max_health() or -1))
+	if (pet.health and pet.prototype and pet.prototype.get_max_health) then
+		if pet.health < pet.prototype.get_max_health() then
+			local h_color = TFS.DAMAGED_HEALTH
+		end
+	end
+
+	local health = string.format("[color=%s]%.1f[/color] | [color=%s]%.1f[/color]", h_color, pet.health or -1, TF.FULL_HEALTH,
+			pet.prototype and pet.prototype.get_max_health() or -1)
+
+	-- Final format of alignment of pet data.
+	local p_name = string.format("%s %s", t.fm("Tier:", "l"), t.fm(pet.name or "<?>", "m", 1))
+	local p_type = string.format("%s %s", t.fm("Type:", "l"), t.fm(pet.type or "<?>", "m", 1))
+	local p_position = string.format("%s %s", t.fm("Position:", "l"), t.fm(position, "m", 1))
+	local p_distance = string.format("%s %s", t.fm("Distance:", "l"), t.fm(distance, "m", 1))
+	local p_health = string.format("%s %s", t.fm("Health:", "l"), t.fm(health, "m", 1))
+
+	return string.format("%s\n%s\n%s\n%s\n%s", p_name, p_type, p_position, p_distance, p_health)
 end
 
 return pet_lifecycle

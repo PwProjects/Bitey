@@ -7,6 +7,9 @@ function audio.play_pet_sound(player, entry, sound, volume)
 		return
 	end
 
+	-- Randomize pet's emote volume.
+	local vol = volume or (0.8 + math.random() * 0.2)
+
 	-- Play audio local to the biter.
 	player.play_sound {
 		path = sound,
@@ -21,7 +24,7 @@ function audio.play_global_sound(player, sound, volume)
 		return
 	end
 
-	player.play_sound {
+	game.play_sound {
 		path = sound,
 		volume_modifier = volume or 1.0
 	}

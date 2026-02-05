@@ -1,3 +1,4 @@
+-- TODO: Add pitch variations for vocalizations (see sound-pitch-variations.docx).
 data:extend({{
 	type = "sound",
 	name = "biter-roar",
@@ -30,4 +31,12 @@ data:extend({{
 	type = "sound",
 	name = "spitter-call-behemoth",
 	variations = sound_variations("__base__/sound/creatures/spitter-spit-start-behemoth", 8)
+}, {
+	type = "sound",
+	name = "intro-spitter-death-call",
+	sound_type = "gui-effect",
+	variations = {
+		filename = "__biter-pet__/sounds/death-rattle.ogg",
+		volume = 1.0
+	}
 }})
