@@ -32,8 +32,8 @@ function pet_lifecycle.get_pet_entry(player_index)
 	if not storage.biter_pet[player_index] then
 		storage.biter_pet[player_index] = {
 			is_orphaned = true,
-			biter_tier = "pet-biter-baby",
-			biter_tier_friendly_name = "pet_biter_baby",
+			biter_tier = "pet-small-biter-baby",
+			biter_tier_friendly_name = "pet_small_biter_baby",
 			was_alive = true,
 			unit = nil
 			-- Any other pet lifecycle fields should go here.

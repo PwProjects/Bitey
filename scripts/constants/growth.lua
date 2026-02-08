@@ -5,9 +5,9 @@ return {
 
 	-- Growth tiers in order.
 	TIERS = {
-		"pet-biter-baby",
-		"pet-biter-small",
-		"pet-biter-large",
+		"pet-small-biter-baby",
+		"pet-small-biter-small",
+		"pet-small-biter-large",
 		"pet-medium-biter-baby",
 		"pet-medium-biter-small",
 		"pet-medium-biter-large",
@@ -17,9 +17,9 @@ return {
 		"pet-behemoth-biter-baby",
 		"pet-behemoth-biter-small",
 		"pet-behemoth-biter-large",
-		"pet-spitter-baby",
-		"pet-spitter-small",
-		"pet-spitter-large",
+		"pet-small-spitter-baby",
+		"pet-small-spitter-small",
+		"pet-small-spitter-large",
 		"pet-medium-spitter-baby",
 		"pet-medium-spitter-small",
 		"pet-medium-spitter-large",

@@ -16,9 +16,9 @@ return {
 	-- Following.
 	PET_FOLLOW_RADIUS = 6.0,
 	FOLLOW_RADIUS_BY_TIER = {
-		["pet-biter-baby"] = 3.0,
-		["pet-biter-small"] = 3.25,
-		["pet-biter-large"] = 3.5
+		["pet-small-biter-baby"] = 3.0,
+		["pet-small-biter-small"] = 3.25,
+		["pet-small-biter-large"] = 3.5
 	},
 	CHANCE_TO_PAUSE = 0.2,
 

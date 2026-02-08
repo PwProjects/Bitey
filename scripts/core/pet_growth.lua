@@ -51,21 +51,21 @@ function pet_growth.try_grow(player_index, entry)
 	local tier = get_tier_index(current)
 
 	-- Baby to Small biter.
-	if current == "pet-biter-baby" then
+	if current == "pet-small-biter-baby" then
 		if evolution_factor > GC.BABY_TO_SMALL_THRESHOLD and math.random() < GC.PET_GROWTH_CHANCE then
-			upgrade_pet(entry, "pet-biter-small")
-			entry.biter_tier = "pet-biter-small"
-			entry.biter_tier_friendly_name = "pet_biter_small"
+			upgrade_pet(entry, "pet-small-biter-small")
+			entry.biter_tier = "pet-small-biter-small"
+			entry.biter_tier_friendly_name = "pet_small_biter_small"
 		end
 		return
 	end
 
 	-- Small to Large biter.
-	if current == "pet-biter-small" then
+	if current == "pet-small-biter-small" then
 		if evolution_factor > GC.SMALL_TO_LARGE_THRESHOLD and math.random() < GC.PET_GROWTH_CHANCE then
-			upgrade_pet(entry, "pet-biter-large")
-			entry.biter_tier = "pet-biter-large"
-			entry.biter_tier_friendly_name = "pet_biter_large"
+			upgrade_pet(entry, "pet-small-biter-large")
+			entry.biter_tier = "pet-small-biter-large"
+			entry.biter_tier_friendly_name = "pet_small_biter_large"
 		end
 		return
 	end

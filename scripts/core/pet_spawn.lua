@@ -28,7 +28,7 @@ function pet_spawn.choose_orphan_spawn(surface, origin)
 		surface.force_generate_chunk_requests()
 
 		if not surface.get_tile(pos).collides_with("water_tile") then
-			local valid = surface.find_non_colliding_position("pet-biter-baby", pos, SC.SPAWN_SEARCH_RADIUS, SC.SEARCH_PRECISION)
+			local valid = surface.find_non_colliding_position("pet-small-biter-baby", pos, SC.SPAWN_SEARCH_RADIUS, SC.SEARCH_PRECISION)
 			if valid then
 				successes = successes + 1
 				pos_candidates[#pos_candidates + 1] = valid
@@ -47,7 +47,7 @@ function pet_spawn.choose_orphan_spawn(surface, origin)
 	end
 
 	-- Take another stab at it if all else fails.
-	local fallback_pos = surface.find_non_colliding_position("pet-biter-baby", origin, 20, 1) or origin
+	local fallback_pos = surface.find_non_colliding_position("pet-small-biter-baby", origin, 20, 1) or origin
 	debug.info("Choosing emergency fallback spawn position.")
 	debug.info("The map better be very abnormal for this message to have triggered.")
 	return fallback_pos
@@ -60,7 +60,7 @@ function pet_spawn.spawn_orphan_baby(player, entry, generate_decoratives)
 	if not storage.pet_spawn_point then storage.pet_spawn_point = pet_spawn.choose_orphan_spawn(surface, player.position) end
 
 	-- Ensure the tile is actually walkable.
-	local position = surface.find_non_colliding_position("pet-biter-baby", storage.pet_spawn_point, 10, 0.5)
+	local position = surface.find_non_colliding_position("pet-small-biter-baby", storage.pet_spawn_point, 10, 0.5)
 
 	if not position then
 		debug.info("Could not find a valid spawn location for the orphaned biter.")
@@ -71,7 +71,7 @@ function pet_spawn.spawn_orphan_baby(player, entry, generate_decoratives)
 
 	-- Spawn the orphaned pet.
 	local pet = surface.create_entity {
-		name = "pet-biter-baby",
+		name = "pet-small-biter-baby",
 		position = position,
 		force = game.forces["pet_orphan"]
 	}
@@ -81,7 +81,7 @@ function pet_spawn.spawn_orphan_baby(player, entry, generate_decoratives)
 
 	entry.unit = pet
 	entry.is_orphaned = true
-	entry.biter_tier = "pet-biter-baby" -- Reset pet tier for new orphans.
+	entry.biter_tier = "pet-small-biter-baby" -- Reset pet tier for new orphans.
 	debug.info("Orphaned biter has spawned.")
 end
 
@@ -92,7 +92,7 @@ function pet_spawn.spawn_pet_for_player(player, entry)
 	-- Check if biter was alive but is now missing (despawn and bug recovery).
 	-- Assume that if entry.unit is nil and entry.was_alive is true, it's a lost pet.
 	if entry.was_alive and (not entry.unit or not entry.unit.valid) then
-		local tier = entry.biter_tier or "pet-biter-baby"
+		local tier = entry.biter_tier or "pet-small-biter-baby"
 		debug.info(string.format("Recovering lost pet %s", t.f(tier, "f")))
 		local position = player.surface.find_non_colliding_position(tier, player.position, 15, 0.5)
 

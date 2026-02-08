@@ -1,7 +1,8 @@
 local debug = require("scripts.util.debug")
 local pet_state = require("scripts.core.pet_state")
 
-local SCALE = require("__biter-pet__.shared.scaling")
+local SCALING = require("__biter-pet__.shared.scaling")
+local SCALE = SCALING.SIZE_SCALE
 
 local pet_circadian = {}
 
@@ -18,7 +19,6 @@ function pet_circadian.enter_sleep(player_index, entry)
 
 	pet.destroy()
 
-	-- Replace "pet-biter-small" → "pet-biter-small-sleeping"
 	local sleeper = surface.create_entity {
 		name = name,
 		position = pos,
@@ -60,10 +60,8 @@ function pet_circadian.exit_sleep(player_index, entry)
 	local pos = unit.position
 	local force = unit.force
 
-	-- Replace "pet-biter-small-sleeping" → "pet-biter-small"
 	local active_name = unit.name:gsub("-sleeping", "")
 
-	-- Destroy place-holder unit.
 	unit.destroy()
 	if entry.sleep_animation_id then
 		entry.sleep_animation_id.destroy(entry.sleep_animation_id)

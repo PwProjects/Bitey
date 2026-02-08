@@ -1,13 +1,13 @@
 local BITER_MAP = {
-	pet_biter_baby = {
+	pet_small_biter_baby = {
 		base_equivalent = "small-biter",
 		sound = "biter-roar"
 	},
-	pet_biter_small = {
+	pet_small_biter_small = {
 		base_equivalent = "small-biter",
 		sound = "biter-roar"
 	},
-	pet_biter_large = {
+	pet_small_biter_large = {
 		base_equivalent = "small-biter",
 		sound = "biter-roar"
 	},

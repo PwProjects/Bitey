@@ -1,6 +1,26 @@
-local SCALE = require("__biter-pet__.shared.scaling")
+local SCALING = require("__biter-pet__.shared.scaling")
+local SCALE = SCALING.SIZE_SCALE
+local SPEED = SCALING.SPEED_SCALE
 
-local function make_pet_variant(base, name, remove_after_test)
+local BASES = {
+	biter = "small-biter",
+	mediumbiter = "medium-biter",
+	bigbiter = "big-biter",
+	behemothbiter = "behemoth-biter",
+
+	spitter = "small-spitter",
+	mediumspitter = "medium-spitter",
+	bigspitter = "big-spitter",
+	behemothspitter = "behemoth-spitter"
+}
+
+local TIERS = {
+	baby = "baby",
+	small = "small",
+	large = "large"
+}
+
+local function make_pet_variant(base, name)
 	local scale_factor = SCALE[name]
 	local pet = table.deepcopy(data.raw.unit[base])
 	pet.name = name
@@ -57,8 +77,7 @@ local function make_pet_variant(base, name, remove_after_test)
 	return pet
 end
 
-local function make_sleeping_pet_variant(base, name, remove_after_test)
-
+local function make_sleeping_pet_variant(base, name)
 	local function normalize_name(name)
 		return name:gsub("-sleeping", "")
 	end
@@ -69,7 +88,7 @@ local function make_sleeping_pet_variant(base, name, remove_after_test)
 	local pet = table.deepcopy(data.raw.unit[base])
 	pet.name = name
 
-	pet.movement_speed = 0.01
+	pet.movement_speed = SPEED["sleeping"] or 0.01
 	pet.attack_parameters.acquisition_fire_range = 0
 	pet.attack_parameters.range = 0
 	pet.attack_from_start_frame = false
@@ -99,39 +118,47 @@ local function make_sleeping_pet_variant(base, name, remove_after_test)
 	return pet
 end
 
-data:extend{
-	make_pet_variant("small-biter", "pet-biter-baby", 0.65),
-	make_pet_variant("small-biter", "pet-biter-small", 0.85),
-	make_pet_variant("small-biter", "pet-biter-large", 1.0),
-	make_sleeping_pet_variant("small-biter", "pet-biter-baby-sleeping", 0.65),
-	make_sleeping_pet_variant("small-biter", "pet-biter-small-sleeping", 0.85),
-	make_sleeping_pet_variant("small-biter", "pet-biter-large-sleeping", 1.0),
+local function make_idle_variant(active_table, idle_name, speed_multiplier)
+	local base = table.deepcopy(active_table)
 
-	make_pet_variant("medium-biter", "pet-medium-biter-baby", 0.65),
-	make_pet_variant("medium-biter", "pet-medium-biter-small", 0.85),
-	make_pet_variant("medium-biter", "pet-medium-biter-large", 1.0),
+	base.name = idle_name
+	base.movement_speed = (base.movement_speed or 0.1) * speed_multiplier
 
-	make_pet_variant("big-biter", "pet-big-biter-baby", 0.65),
-	make_pet_variant("big-biter", "pet-big-biter-small", 0.85),
-	make_pet_variant("big-biter", "pet-big-biter-large", 1.0),
+	local function adjust_animation(anim)
+		if not anim then return end
+		if anim.layers then
+			for _, layer in pairs(anim.layers) do layer.animation_speed = (layer.animation_speed or 1) * speed_multiplier end
+		else
+			anim.animation_speed = (anim.animation_speed or 1) * speed_multiplier
+		end
+	end
 
-	make_pet_variant("behemoth-biter", "pet-behemoth-biter-baby", 0.65),
-	make_pet_variant("behemoth-biter", "pet-behemoth-biter-small", 0.85),
-	make_pet_variant("behemoth-biter", "pet-behemoth-biter-large", 1.0),
+	adjust_animation(base.run_animation)
+	adjust_animation(base.attack_parameters and base.attack_parameters.animation)
 
-	make_pet_variant("small-spitter", "pet-spitter-baby", 0.65),
-	make_pet_variant("small-spitter", "pet-spitter-small", 0.85),
-	make_pet_variant("small-spitter", "pet-spitter-large", 1.0),
+	return base
+end
 
-	make_pet_variant("medium-spitter", "pet-medium-spitter-baby", 0.65),
-	make_pet_variant("medium-spitter", "pet-medium-spitter-small", 0.85),
-	make_pet_variant("medium-spitter", "pet-medium-spitter-large", 1.0),
+local active_variants = {}
+local sleeping_variants = {}
+local idle_variants = {}
 
-	make_pet_variant("big-spitter", "pet-big-spitter-baby", 0.65),
-	make_pet_variant("big-spitter", "pet-big-spitter-small", 0.85),
-	make_pet_variant("big-spitter", "pet-big-spitter-large", 1.0),
+for species, base in pairs(BASES) do
+	for _, tiers in pairs(TIERS) do
+		local name = "pet-" .. base .. "-" .. tiers
 
-	make_pet_variant("behemoth-spitter", "pet-behemoth-spitter-baby", 0.65),
-	make_pet_variant("behemoth-spitter", "pet-behemoth-spitter-small", 0.85),
-	make_pet_variant("behemoth-spitter", "pet-behemoth-spitter-large", 1.0)
-}
+		-- 1. Create the active pet table
+		local active_pet = make_pet_variant(base, name)
+		table.insert(active_variants, active_pet)
+
+		local sleeping_name = name .. "-sleeping"
+		table.insert(sleeping_variants, make_sleeping_pet_variant(base, sleeping_name))
+
+		local idle_name = name .. "-idle"
+		table.insert(idle_variants, make_idle_variant(active_pet, idle_name, SPEED["idle"]))
+	end
+end
+
+data:extend(active_variants)
+data:extend(sleeping_variants)
+data:extend(idle_variants)
