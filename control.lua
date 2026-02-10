@@ -1,8 +1,8 @@
 local debug = require("scripts.util.debug")
 local events = require("scripts.core.events")
-local pet_circadian = require("scripts.core.pet_circadian")
 local pet_lifecycle = require("scripts.core.pet_lifecycle")
 local pet_state = require("scripts.core.pet_state")
+local pet_state_machine = require("scripts.core.pet_state_machine")
 local t = require("scripts.util.text_format")
 
 local DC = require("scripts.constants.debug")
@@ -42,10 +42,10 @@ commands.add_command("bpsleep", "Put the pet to sleep.", function(command)
 	if not entry then return end
 
 	if entry.wake_state == "sleeping" then
-		game.print(string.format("%s %s", DC.ICON, "The pet is already sleeping."))
+		game.print(string.format("%s %s", DC.ICON, t.f("The pet is already sleeping.")))
 	else
-		game.print(string.format("%s %s", DC.ICON, "Putting the pet to sleep."))
-		pet_circadian.enter_sleep(player_index, entry)
+		game.print(string.format("%s %s", DC.ICON, t.f("Putting the pet to sleep.")))
+		pet_state_machine.enter_sleep(player_index, entry)
 	end
 end)
 
@@ -55,11 +55,11 @@ commands.add_command("bpwake", "Wake the pet up from sleep.", function(command)
 	local entry = storage.biter_pet[command.player_index]
 	if not entry then return end
 	
-	if entry.wake_state == "awake" then
-		game.print(string.format("%s %s", DC.ICON, "The pet is already awake."))
+	if entry.wake_state == "active" then
+		game.print(string.format("%s %s", DC.ICON, t.f("The pet is already awake.")))
 	else
-		game.print(string.format("%s %s", DC.ICON, "Waking the pet up from sleep."))
-		pet_circadian.exit_sleep(player_index, entry)
+		game.print(string.format("%s %s", DC.ICON, t.f("Waking the pet up from sleep.")))
+		pet_state_machine.enter_active(player_index, entry)
 	end
 end)
 
@@ -67,9 +67,19 @@ commands.add_command("bpvisual", string.format("%s %s", DC.ICON, t.f("Visualize 
 		function(command)
 			local enabled = debug.toggle_visualizer()
 			if enabled then
-				game.print(string.format("%s %s %s", DC.ICON, "Visualizer", t.f("enabled", "f")))
+				game.print(string.format("%s %s %s", DC.ICON, t.f("Visualizer"), t.f("enabled", "f")))
 			else
-				game.print(string.format("%s %s %s", DC.ICON, "Visualizer", t.f("disabled", "e")))
+				game.print(string.format("%s %s %s", DC.ICON, t.f("Visualizer"), t.f("disabled", "e")))
+			end
+		end)
+
+commands.add_command("bpmoods", string.format("%s %s", DC.ICON, t.f("Decrease mood emote interval for debugging.")),
+		function(command)
+			local enabled = debug.toggle_mood_debugging()
+			if enabled then
+				game.print(string.format("%s %s %s", DC.ICON, t.f("Mood debugging"), t.f("enabled", "f")))
+			else
+				game.print(string.format("%s %s %s", DC.ICON, t.f("Mood debugging"), t.f("disabled", "e")))
 			end
 		end)
 
@@ -92,6 +102,7 @@ script.on_load(function()
 	register_runtime_events()
 end)
 
+-- TODO: Thoroughly test existing save spawn logic.
 script.on_configuration_changed(function(cfg)
 	events.on_configuration_changed(cfg)
 end)

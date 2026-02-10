@@ -3,7 +3,6 @@ local notifications = require("scripts.util.notifications")
 local position = require("scripts.util.position")
 local audio = require("scripts.util.audio")
 local pet_state = require("scripts.core.pet_state")
-
 local EVENT_SETTINGS = require("scripts.constants.events")
 local BITER_CONSTANTS = require("scripts.constants.biters")
 local BITER_MAP = BITER_CONSTANTS.BITER_MAP
@@ -13,14 +12,12 @@ local pet_behavior = {}
 local function process_intro_notification(player_index, entry)
 	local now = game.tick
 	local player = game.get_player(player_index)
-
 	if not player then return end
 
 	if not (entry.unit and entry.unit.valid) then return end
-
 	local pet = entry.unit
 
-	if not (entry.intro_end_tick or entry.intro_pet_alert_threshold) then
+	if not entry.intro_end_tick or not entry.intro_pet_alert_threshold then
 		entry.intro_end_tick = now
 		local random_delay = now + EVENT_SETTINGS.MININUM_DELAY_BEFORE_PET_SPAWN_AFTER_INTRO +
 				                     math.random(0, EVENT_SETTINGS.RANDOM_DELAY_PADDING)
@@ -32,10 +29,10 @@ local function process_intro_notification(player_index, entry)
 			local direction = position.get_direction_of_position(player.position, pet.position)
 			notifications.notify(player, pet, {
 				type = "entity",
-				name = BITER_MAP[entry.biter_tier_friendly_name].base_equivalent
+				name = BITER_MAP[entry.biter_tier].base_equivalent
 			}, "You hear a strange noise coming from the " .. direction .. ".")
 			entry.intro_notification_sent = true
-			audio.play_global_sound(player, "intro-spitter-death-call")
+			audio.play_global_sound(player, "death-rattle")
 			player.force.chart(pet.surface, {
 				{
 					pet.position.x - 4,
@@ -55,7 +52,6 @@ local function process_intro_notification(player_index, entry)
 			})
 		end
 	end
-
 end
 
 function pet_behavior.process_events(player_index, entry)
@@ -66,7 +62,6 @@ function pet_behavior.record_intro_cinematic_end_tick(player_index, entry)
 	local player = game.get_player(player_index)
 	if not player then return end
 	if player.controller_type ~= defines.controllers.cutscene then entry.intro_end_tick = game.tick end
-
 end
 
 function pet_behavior.on_research_finished(event)

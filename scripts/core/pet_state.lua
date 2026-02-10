@@ -2,10 +2,12 @@ local debug = require("scripts.util.debug")
 local pet_visuals = require("scripts.core.pet_visuals")
 local t = require("scripts.util.text_format")
 
-local TF = require("scripts.constants.text_format") -- Text color constants.
+local TF = require("scripts.constants.text_format")
 
 local NEEDS_CONSTANTS = require("scripts.constants.needs")
 local PET_NEEDS = NEEDS_CONSTANTS.NEEDS_CONSTANTS
+
+local DC = require("scripts.constants.debug")
 
 local PET_VISUALS_CONSTANTS = require("scripts.constants.visuals")
 local RENDER_SETTINGS = PET_VISUALS_CONSTANTS.RENDER_SETTINGS
@@ -31,7 +33,7 @@ local function ensure_state(player_index)
 			morph = 0,
 			thirst = 100,
 			tiredness = 0,
-			wake_state = "awake",
+			wake_state = "active",
 			feeding_target = nil
 		}
 		storage.pet_state[player_index] = state
@@ -45,7 +47,7 @@ local function ensure_state(player_index)
 		state.morph = state.morph or 0
 		state.thirst = state.thirst or 100
 		state.tiredness = state.tiredness or 0
-		state.wake_state = state.wake_state or "awake"
+		state.wake_state = state.wake_state or "active"
 		state.feeding_target = state.feeding_target or nil
 	end
 
@@ -109,7 +111,7 @@ end
 function pet_state.on_emote_finished(player_index, entry)
 	local emote_state = ensure_queue(player_index)
 
-	-- If this was a forced emote, start the next one immediately.
+	-- If this was a forced emote then start the next one immediately.
 	if emote_state.active_type == "forced" then
 		emote_state.active_emote = nil
 		emote_state.active_type = nil
@@ -118,14 +120,12 @@ function pet_state.on_emote_finished(player_index, entry)
 		pet_state.start_next_forced_emote(player_index, entry)
 		return
 	end
-
-	-- Otherwise, mood emotes will be handled by tick_emotes().
 end
 
 function pet_state.force_emote(player_index, entry, emote, fast_render)
 	local emote_state = ensure_queue(player_index)
-
-	-- Destroy any mood emote render to clear way for event-driven emote.
+	
+	-- Destroy any random mood emote to clear way for event driven emotes.
 	if (emote_state.sprite_render and emote_state.active_type ~= "forced") then
 		if emote_state.sprite_render.sprite and emote_state.sprite_render.sprite.valid then
 			emote_state.sprite_render.sprite.destroy()
@@ -138,13 +138,19 @@ function pet_state.force_emote(player_index, entry, emote, fast_render)
 
 	emote_state.active_emote = nil
 	emote_state.ends_at_tick = nil
-
-	-- Clear current emote queue.
 	emote_state.queue = {}
+
+	-- Don't queue duplicate emotes for fast rendering.
+	for _, queued in ipairs(emote_state.forced_queue) do
+		if queued == emote then
+			debug.trace(string.format("Render request ignored because %s is already queued.", t.f(emote, "f")))
+			return
+		end
+	end
 
 	table.insert(emote_state.forced_queue, emote)
 
-	-- If nothing is active, fire emote immediately.
+	-- If nothing is active then render the emote immediately.
 	if not emote_state.active_type then
 		debug.info(string.format("An event has triggered a forced emote [%s].", t.f(emote, "f")))
 		pet_state.start_next_forced_emote(player_index, entry, fast_render)
@@ -178,15 +184,26 @@ local function tick_emotes(player_index, entry)
 	end
 end
 
+local function get_next_needs_interval(now, need)
+	if debug.mood_debugging_enabled then
+		if not PET_NEEDS.DEBUG_INTERVALS[need] then
+			debug.error("Missing need in debug intervals table.")
+		else
+			return now + PET_NEEDS.DEBUG_INTERVALS[need]
+		end
+	end
+	return now + PET_NEEDS.DEFAULT_INTERVALS[need]
+end
+
 function pet_state.tick_pet_state(player_index, entry)
 	local state = ensure_state(player_index)
 	local now = game.tick
 	local pet = entry.unit
 
-	state.next_hunger_tick = state.next_hunger_tick or (now + PET_NEEDS.HUNGER_INTERVAL)
+	state.next_hunger_tick = state.next_hunger_tick or get_next_needs_interval(now, "hunger")
 	if now >= state.next_hunger_tick then
 		pet_state.add_hunger(player_index, PET_NEEDS.HUNGER_INCREMENT)
-		state.next_hunger_tick = now + PET_NEEDS.HUNGER_INTERVAL
+		state.next_hunger_tick = now + get_next_needs_interval(now, "hunger")
 
 		if state.hunger >= MOOD_THRESHOLDS.STARVING then
 			debug.info(string.format("Severe %s has incurred %s penalty", t.f("hunger", "e"), t.f("happiness", "f")))
@@ -194,10 +211,10 @@ function pet_state.tick_pet_state(player_index, entry)
 		end
 	end
 
-	state.next_thirst_tick = state.next_thirst_tick or (now + PET_NEEDS.THIRST_INTERVAL)
+	state.next_thirst_tick = state.next_thirst_tick or get_next_needs_interval(now, "thirst")
 	if now >= state.next_thirst_tick then
 		pet_state.add_thirst(player_index, PET_NEEDS.THIRST_INCREMENT)
-		state.next_thirst_tick = now + PET_NEEDS.THIRST_INTERVAL
+		state.next_thirst_tick = get_next_needs_interval(now, "thirst")
 
 		if state.thirst >= MOOD_THRESHOLDS.DEHYDRATED then
 			debug.info(string.format("Severe %s has incurred %s penalty", t.f("thirst", "e"), t.f("happiness", "f")))
@@ -205,10 +222,10 @@ function pet_state.tick_pet_state(player_index, entry)
 		end
 	end
 
-	state.next_boredom_tick = state.next_boredom_tick or (now + PET_NEEDS.BOREDOM_INTERVAL)
+	state.next_boredom_tick = state.next_boredom_tick or get_next_needs_interval(now, "boredom")
 	if now >= state.next_boredom_tick then
 		pet_state.add_boredom(player_index, PET_NEEDS.BOREDOM_INCREMENT)
-		state.next_boredom_tick = now + PET_NEEDS.BOREDOM_INTERVAL
+		state.next_boredom_tick = now + get_next_needs_interval(now, "boredom")
 
 		if state.boredom >= MOOD_THRESHOLDS.FRUSTRATED then
 			debug.info(string.format("Severe %s has incurred %s penalty", t.f("boredom", "e"), t.f("happiness", "f")))
@@ -216,13 +233,14 @@ function pet_state.tick_pet_state(player_index, entry)
 		end
 	end
 
-	state.next_mood_calc_tick = state.next_mood_calc_tick or (now + PET_NEEDS.MOOD_RECALCULATION_INTERVAL)
+	state.next_mood_calc_tick = state.next_mood_calc_tick or get_next_needs_interval(now, "mood")
 	if now >= state.next_mood_calc_tick then
+		debug.trace("Pet state tick firing.")
 		-- Recalculate mood.
 		state.mood = pet_state.calculate_mood(player_index)
 		debug.info(string.format("%s [%s]", "A new mood has been calculated and queued", t.f(state.mood, "f")))
 		pet_state.queue_emote(player_index, pet, state.mood)
-		state.next_mood_calc_tick = now + PET_NEEDS.MOOD_RECALCULATION_INTERVAL
+		state.next_mood_calc_tick = get_next_needs_interval(now, "mood")
 
 		if state.friendship <= MOOD_THRESHOLDS.DEPRESSED then
 			debug.info(string.format("Severe %s has incurred %s penalty", t.f("happiness", "e"), t.f("friendship", "f")))
@@ -330,14 +348,17 @@ function pet_state.set_hunger(player_index, value)
 	state.hunger = math.max(0, math.min(100, value))
 end
 
+local function debug_needs_update(label, new_state, old_state)
+	if not DC.DEBUG_SHOW_NEEDS_UPDATES or not (debug.current_level >= 3) then return end
+	local verb = (new_state > old_state and "increased") or (new_state < old_state and "decreased") or "unchanged"
+	debug.info(string.format("%s %s from %s to %s.", t.f(label, "i"), verb, t.f(old_state, "f"), t.f(new_state, "f")))
+end
+
 function pet_state.add_hunger(player_index, delta)
 	if not delta then return end
 	local state = ensure_state(player_index)
-	delta = delta or PET_NEEDS.HUNGER_INCREMENT
 	local new_hunger = math.max(0, math.min(100, state.hunger + (delta)))
-
-	debug.info(string.format("[color=%s]Hunger[/color] %s from %s to %s.", TF.INFO_COLOR,
-			(delta > 0 and "increased") or "decreased", state.hunger, new_hunger))
+	debug_needs_update("Hunger", new_hunger, state.hunger)
 	state.hunger = new_hunger
 end
 
@@ -349,6 +370,16 @@ end
 function pet_state.get_feeding_target(player_index)
 	local state = ensure_state(player_index)
 	return state.feeding_target
+end
+
+function pet_state.set_idle_target(player_index, entity)
+	local state = ensure_state(player_index)
+	state.idle_target = entity or nil
+end
+
+function pet_state.get_idle_target(player_index, entity)
+	local state = ensure_state(player_index)
+	return state.idle_target
 end
 
 -- Thirst functions.
@@ -366,8 +397,7 @@ function pet_state.add_thirst(player_index, delta)
 	if not delta then return end
 	local state = ensure_state(player_index)
 	local new_thirst = math.max(0, math.min(100, state.thirst + delta))
-	debug.info(string.format("[color=%s]Thirst[/color] %s from %s to %s.", TF.INFO_COLOR,
-			(delta > 0 and "increased") or "decreased", state.thirst, new_thirst))
+	debug_needs_update("Thirst", new_thirst, state.thirst)
 	state.thirst = new_thirst
 end
 
@@ -386,8 +416,7 @@ function pet_state.add_tiredness(player_index, delta)
 	if not delta then return end
 	local state = ensure_state(player_index)
 	local new_tiredness = math.max(0, math.min(100, state.tiredness + delta))
-	debug.info(string.format("[color=%s]Tireness[/color] %s from %s to %s.", TF.INFO_COLOR,
-			(delta > 0 and "increased") or "decreased", state.tiredness, new_tiredness))
+	debug_needs_update("Tiredness", new_tiredness, state.tiredness)
 	state.tiredness = new_tiredness
 end
 
@@ -406,8 +435,7 @@ function pet_state.add_morph(player_index, delta)
 	if not delta then return end
 	local state = ensure_state(player_index)
 	local new_morph = math.max(0, math.min(100, state.morph + delta))
-	debug.info(string.format("[color=%s]Morph[/color] %s from %s to %s.", TF.INFO_COLOR,
-			(delta > 0 and "increased") or "decreased", state.morph, new_morph))
+	debug_needs_update("Morph", new_morph, state.morph)
 	state.morph = new_morph
 end
 
@@ -426,8 +454,7 @@ function pet_state.add_evolution(player_index, delta)
 	if not delta then return end
 	local state = ensure_state(player_index)
 	local new_evolution = math.max(0, math.min(100, state.evolution + delta))
-	debug.info(string.format("[color=%s]Evolution[/color] %s from %s to %s.", TF.INFO_COLOR,
-			(delta > 0 and "increased") or "decreased", state.evolution, new_evolution))
+	debug_needs_update("Evolution", new_evolution, state.evolution)
 	state.evolution = new_evolution
 end
 
@@ -446,8 +473,7 @@ function pet_state.add_boredom(player_index, delta)
 	if not delta then return end
 	local state = ensure_state(player_index)
 	local new_boredom = math.max(0, math.min(100, state.boredom + delta))
-	debug.info(string.format("[color=%s]Boredom[/color] %s from %s to %s.", TF.INFO_COLOR,
-			(delta > 0 and "increased") or "decreased", state.boredom, new_boredom))
+	debug_needs_update("Boredom", new_boredom, state.boredom)
 	state.boredom = new_boredom
 end
 
@@ -466,8 +492,7 @@ function pet_state.add_happiness(player_index, delta)
 	if not delta then return end
 	local state = ensure_state(player_index)
 	local new_happiness = math.max(0, math.min(100, state.happiness + delta))
-	debug.info(string.format("[color=%s]Happiness[/color] %s from %s to %s.", TF.INFO_COLOR,
-			(delta > 0 and "increased") or "decreased", state.happiness, new_happiness))
+	debug_needs_update("Happiness", new_happiness, state.happiness)
 	state.happiness = new_happiness
 end
 
@@ -486,8 +511,7 @@ function pet_state.add_friendship(player_index, delta)
 	if not delta then return end
 	local state = ensure_state(player_index)
 	local new_friendship = math.max(0, math.min(100, state.friendship + delta))
-	debug.info(string.format("[color=%s]Friendship[/color] %s from %s to %s.", TF.INFO_COLOR,
-			(delta > 0 and "increased") or "decreased", state.friendship, new_friendship))
+	debug_needs_update("Friendship", new_friendship, state.friendship)
 	state.friendship = new_friendship
 end
 
@@ -512,7 +536,9 @@ function pet_state.debug_dump(player_index)
 	local hunger = string.format("%s %s", t.fm("Hunger:", "f"), t.fm(state.hunger, "m", 1))
 	local morph = string.format("%s %s", t.fm("Morph:", "f"), t.fm(state.morph, "m", 1))
 	local thirst = string.format("%s %s", t.fm("Thirst:", "f"), t.fm(state.thirst, "m", 1))
-	return string.format("%s\n%s\n%s\n%s\n%s\n%s\n%s", boredom, evolution, friendship, happiness, hunger, morph, thirst)
+	local tiredness = string.format("%s %s", t.fm("Tiredness:", "f"), t.fm(state.tiredness, "m", 1))
+	return string.format("%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s", hunger, thirst, happiness, friendship, boredom, tiredness,
+			evolution, morph)
 end
 
 return pet_state

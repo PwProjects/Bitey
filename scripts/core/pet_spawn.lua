@@ -3,7 +3,7 @@ local pet_nest = require("scripts.core.pet_nest")
 local position = require("scripts.util.position")
 local t = require("scripts.util.text_format")
 
-local SC = require("scripts.constants.spawn") -- Pet spawn constants.
+local SC = require("scripts.constants.spawn")
 
 local pet_spawn = {}
 

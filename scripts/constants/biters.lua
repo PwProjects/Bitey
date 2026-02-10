@@ -1,98 +1,98 @@
 local BITER_MAP = {
-	pet_small_biter_baby = {
+	["pet-small-biter-baby"] = {
 		base_equivalent = "small-biter",
 		sound = "biter-roar"
 	},
-	pet_small_biter_small = {
+	["pet-small-biter-small"] = {
 		base_equivalent = "small-biter",
 		sound = "biter-roar"
 	},
-	pet_small_biter_large = {
+	["pet-small-biter-large"] = {
 		base_equivalent = "small-biter",
 		sound = "biter-roar"
 	},
 
-	pet_medium_biter_baby = {
+	["pet-medium-biter-baby"] = {
 		base_equivalent = "medium-biter",
 		sound = "biter-roar-mid"
 	},
-	pet_medium_biter_small = {
+	["pet-medium-biter-small"] = {
 		base_equivalent = "medium-biter",
 		sound = "biter-roar-mid"
 	},
-	pet_medium_biter_large = {
+	["pet-medium-biter-large"] = {
 		base_equivalent = "medium-biter",
 		sound = "biter-roar-mid"
 	},
-	pet_big_biter_baby = {
+	["pet-big-biter-baby"] = {
 		base_equivalent = "big-biter",
 		sound = "biter-roar-big"
 	},
-	pet_big_biter_small = {
+	["pet-big-biter-small"] = {
 		base_equivalent = "big-biter",
 		sound = "biter-roar-big"
 	},
-	pet_big_biter_large = {
+	["pet-big-biter-large"] = {
 		base_equivalent = "big-biter",
 		sound = "biter-roar-big"
 	},
-	pet_behemoth_biter_baby = {
+	["pet-behemoth-biter-baby"] = {
 		base_equivalent = "behemoth-biter",
 		sound = "biter-roar-behemoth"
 	},
-	pet_behemoth_biter_small = {
+	["pet-behemoth-biter-small"] = {
 		base_equivalent = "behemoth-biter",
 		sound = "biter-roar-behemoth"
 	},
-	pet_behemoth_biter_large = {
+	["pet-behemoth-biter-large"] = {
 		base_equivalent = "behemoth-biter",
 		sound = "biter-roar-behemoth"
 	},
-	pet_spitter_baby = {
+	["pet-spitter-baby"] = {
 		base_equivalent = "small-spitter",
 		sound = "spitter-call-small"
 	},
-	pet_spitter_small = {
+	["pet-spitter-small"] = {
 		base_equivalent = "small-spitter",
 		sound = "spitter-call-small"
 	},
-	pet_spitter_large = {
+	["pet-spitter-large"] = {
 		base_equivalent = "small-spitter",
 		sound = "spitter-call-small"
 	},
-	pet_medium_spitter_baby = {
+	["pet-medium-spitter-baby"] = {
 		base_equivalent = "medium-spitter",
 		sound = "spitter-call-med"
 	},
-	pet_medium_spitter_small = {
+	["pet-medium-spitter-small"] = {
 		base_equivalent = "medium-spitter",
 		sound = "spitter-call-med"
 	},
-	pet_medium_spitter_large = {
+	["pet-medium-spitter-large"] = {
 		base_equivalent = "medium-spitter",
 		sound = "spitter-call-med"
 	},
-	pet_large_spitter_baby = {
+	["pet-large-spitter-baby"] = {
 		base_equivalent = "big-spitter",
 		sound = "spitter-call-big"
 	},
-	pet_large_spitter_small = {
+	["pet-large-spitter-small"] = {
 		base_equivalent = "big-spitter",
 		sound = "spitter-call-big"
 	},
-	pet_large_spitter_large = {
+	["pet-large-spitter-large"] = {
 		base_equivalent = "big-spitter",
 		sound = "spitter-call-big"
 	},
-	pet_behemoth_spitter_baby = {
+	["pet-behemoth-spitter-baby"] = {
 		base_equivalent = "behemoth-spitter",
 		sound = "spitter-call-behemoth"
 	},
-	pet_behemoth_spitter_small = {
+	["pet-behemoth-spitter-small"] = {
 		base_equivalent = "behemoth-spitter",
 		sound = "spitter-call-behemoth"
 	},
-	pet_behemoth_spitter_large = {
+	["pet-behemoth-spitter-large"] = {
 		base_equivalent = "behemoth-spitter",
 		sound = "spitter-call-behemoth"
 	}

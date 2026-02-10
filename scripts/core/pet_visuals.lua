@@ -41,6 +41,7 @@ function pet_visuals.show_pet_reaction(player_index, entry, sprite, fast_render)
 	else
 		debug.trace(string.format("Standard render queued for sprite [img=%s].", sprite))
 	end
+	
 	local sprite_id = rendering.draw_sprite {
 		sprite = sprite,
 		target = target,

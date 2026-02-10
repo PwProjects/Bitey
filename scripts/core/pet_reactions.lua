@@ -1,3 +1,4 @@
+local debug = require("scripts.util.debug")
 local pet_state = require("scripts.core.pet_state")
 
 local REACTIONS_CONSTANTS = require("scripts.constants.reactions")

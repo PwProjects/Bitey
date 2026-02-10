@@ -1,7 +1,7 @@
 local t = require("scripts.util.text_format")
 
-local DC = require("scripts.constants.debug") -- Debug constants.
-local TF = require("scripts.constants.text_format") -- Text color constants.
+local DC = require("scripts.constants.debug")
+local TF = require("scripts.constants.text_format")
 local LC = require("scripts.constants.lifecycle")
 
 local pet_debug = {}
@@ -16,6 +16,8 @@ pet_debug.level = {
 }
 
 pet_debug.visualizers_enabled = DC.DEBUG_VISUALIZERS_ENABLED
+pet_debug.mood_debugging_enabled = DC.DEBUG_MOOD_ENABLED
+
 pet_debug.level_name = {}
 
 -- Debug levels reverse map.
@@ -108,7 +110,7 @@ end
 
 local function get_font_color_from_level(level)
 	if level == pet_debug.level.none then
-		return TF.NONE_COLOR
+		return TF.LABEL_COLOR
 	elseif level == pet_debug.level.error then
 		return TF.ERROR_COLOR
 	elseif level == pet_debug.level.warn then
@@ -259,5 +261,11 @@ function pet_debug.toggle_visualizer()
 	pet_debug.visualizers_enabled = not pet_debug.visualizers_enabled
 	return pet_debug.visualizers_enabled
 end
+
+function pet_debug.toggle_mood_debugging()
+	pet_debug.mood_debugging_enabled = not pet_debug.mood_debugging_enabled
+	return pet_debug.mood_debugging_enabled
+end
+
 
 return pet_debug

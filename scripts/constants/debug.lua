@@ -1,11 +1,13 @@
 return {
-	DEBUG_DEFAULT_LEVEL = 3,
+	DEBUG_DEFAULT_LEVEL = 0,
 	DEBUG_ENABLE_RATE_LIMITER = false,
 	DEBUG_RATE_LIMIT = 30, -- Limit to 1 message per DEBUG_RATE_LIMIT ticks per module.
 
 	ICON = "[img=biter-pet]",
 
 	DEBUG_VISUALIZERS_ENABLED = false,
+	DEBUG_SHOW_NEEDS_UPDATES = false,
+	DEBUG_MOOD_ENABLED = false,
 	DEBUG_VISUALIZE_STATE_OFFSET = {
 		0.65,
 		-0.75

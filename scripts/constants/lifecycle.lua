@@ -1,10 +1,9 @@
--- TODO: Break these out into clearly defined tables (low-priority).
 return {
 	-- Attacking.
 	PET_ATTACK_RADIUS = 5.0,
 
 	-- Fleeing.
-	PET_IS_SCAREDY_CAT = true, -- Enable to debug and trace flee mechanics.
+	PET_IS_SCAREDY_CAT = true, -- NOTE: Enable to debug and trace flee mechanics.
 	PET_SAFE_THRESHOLD = 0.50,
 	PET_FLEE_THRESHOLD = 1,
 	PET_FLEE_SAFE_DISTANCE = 50,
@@ -20,6 +19,7 @@ return {
 		["pet-small-biter-small"] = 3.25,
 		["pet-small-biter-large"] = 3.5
 	},
+	IDLE_RADIUS_MULTIPLIER = 3.0,
 	CHANCE_TO_PAUSE = 0.2,
 
 	-- Bonding.

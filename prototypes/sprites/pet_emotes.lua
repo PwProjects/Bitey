@@ -1,6 +1,3 @@
--- TODO: Add sleeping animation for small-biter.
--- TODO: Starting testing evolution.
--- TODO: Add animations for other biters if necessary.
 data:extend({
 	{
 		type = "sprite",

@@ -9,7 +9,7 @@ return {
 	LABEL_COLOR = "#aaaaaa", -- l
 	ALWAYS_COLOR = "#ff00ff", -- a
 	NONE_COLOR = "#000000", -- n"
-	ERROR_COLOR = "#ff0000", -- r
+	ERROR_COLOR = "#ff0000", -- e
 	WARN_COLOR = "#ffff00", -- w
 	INFO_COLOR = "#0088ff", -- i
 	TRACE_COLOR = "#ff8800", -- t

@@ -12,6 +12,8 @@ local REACTION_CONSTANTS = require("scripts.constants.reactions")
 local FOOD_DEFINITIONS = REACTION_CONSTANTS.FOOD_DEFINITIONS
 local COMBAT_REACTIONS = REACTION_CONSTANTS.COMBAT_REACTIONS
 
+local DC = require("scripts.constants.debug")
+
 local pet_modifiers = {}
 
 local STATE_MODIFIER_KEYS = {
@@ -74,7 +76,9 @@ function pet_modifiers.apply_cowardice_modifiers(player_index, entry)
 end
 
 function pet_modifiers.apply_food_modifiers(player_index, entry, food)
-	debug.info(string.format("Applying modifiers for eating %s", food))
+	if DC.DEBUG_SHOW_NEEDS_UPDATES and debug.current_level >= 3 then
+		debug.info(string.format("Applying modifiers for eating %s", food))
+	end
 
 	local modifiers = FOOD_MODIFIERS[food]
 	if not modifiers then

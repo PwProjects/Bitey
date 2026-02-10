@@ -41,7 +41,7 @@ data:extend({
 	},
 	{
 		type = "sound",
-		name = "intro-spitter-death-call",
+		name = "death-rattle",
 		sound_type = "gui-effect",
 		variations = {
 			filename = "__biter-pet__/sounds/death-rattle.ogg",
