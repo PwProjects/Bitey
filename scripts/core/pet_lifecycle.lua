@@ -594,8 +594,14 @@ local function process_pet(player_index)
 		return
 	end
 
+	local state = pet_state.get_state(player_index)
 	local tree_target = pet_state.get_tree_target(player_index)
 	if tree_target and tree_target.valid then
+		if state.last_tree_target ~= tree_target then
+			pet_state.force_emote(player_index, entry, "work")
+			state.last_tree_target = tree_target
+		end
+
 		pet_state.set_behavior(player_index, "deconstruct_tree")
 		behavior = "deconstruct_tree"
 	end
@@ -664,6 +670,7 @@ function pet_lifecycle.on_entity_died(event)
 			local state = pet_state.get_state(player_index)
 			if state.tree_target == entity then
 				pet_state.clear_tree_target(player_index)
+				state.last_tree_target = nil
 				pet_state.set_behavior(player_index, "idle")
 			end
 		end
