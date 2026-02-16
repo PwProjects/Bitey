@@ -87,36 +87,20 @@ function pet_spawn.spawn_orphan_baby(player, entry, generate_decoratives)
 end
 
 function pet_spawn.spawn_pet_for_player(player_index, player, entry)
-	local now = game.tick
 
 	-- Assume that if unit is nil and it was preivously alive then it's a lost pet.
-	if entry.was_alive and (not entry.unit or not entry.unit.valid) then
-		local tier = entry.biter_tier or "pet-small-biter-baby"
-		debug.info(string.format("Recovering lost pet %s", t.f(tier, "f")))
-		local position = player.surface.find_non_colliding_position(tier, player.position, 15, 0.5)
+	local tier = entry.biter_tier or "pet-small-biter-baby"
+	debug.info(string.format("Recovering lost pet %s", t.f(tier, "f")))
 
-		if position then
-			entry.unit = player.surface.create_entity {
-				name = tier,
-				position = position,
-				force = player.force
-			}
-			return
-		end
-	end
+	local position = player.surface.find_non_colliding_position(tier, player.position, 15, 0.5)
 
-	-- If pet was legitimately killed then spawn a new orphan after a day or two.
-	if not (entry.unit and entry.unit.valid) then
-		entry.was_alive = false
-		local last_death = entry.last_death_tick or 0
-		if (now - last_death) >= SS.ticks_per_day then
-			debug.info("Spawning replacement orphan.")
-			pet_spawn.spawn_orphan_baby(player, entry, false)
-			entry.was_alive = true
-		else
-			local remaining = math.floor((SS.ticks_per_day - (now - last_death)) / 60)
-			debug.trace(string.format("Pet spawn will trigger in %s seconds.", t.f(remaining, "f")))
-		end
+	if position then
+		entry.unit = player.surface.create_entity {
+			name = tier,
+			position = position,
+			force = player.force
+		}
+		return
 	end
 end
 

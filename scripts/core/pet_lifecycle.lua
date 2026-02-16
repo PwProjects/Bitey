@@ -19,6 +19,7 @@ local t = require("scripts.utilities.text_format")
 
 local BM = require("scripts.constants.biters").BITER_MAP
 local ID = require("scripts.constants.reactions").ITEM_DEFINITIONS
+local SS = require("scripts.constants.spawn").SPAWN_SETTINGS
 local DC = require("scripts.constants.debug")
 local LC = require("scripts.constants.lifecycle")
 local TF = require("scripts.constants.text_format")
@@ -26,11 +27,11 @@ local TF = require("scripts.constants.text_format")
 local pet_lifecycle = {}
 
 function pet_lifecycle.peek_pet_entry(player_index)
-	local pets = sotrage.biter_pet
+	local pets = storage.biter_pet
 	return pets and pets[player_index] or nil
 end
 
-function pet_lifecycle.get_pet_entry(player_index)
+function pet_lifecycle.ensure_pet_entry(player_index)
 	storage.biter_pet = storage.biter_pet or {}
 	local entry = storage.biter_pet[player_index]
 
@@ -56,13 +57,25 @@ function pet_lifecycle.get_pet_entry(player_index)
 		entry.biter_tier = entry.biter_tier or "pet-small-biter-baby"
 		entry.current_form = entry.current_form or "active"
 		entry.current_species = entry.current_species or "biter"
-
-		-- Clear stale entity reference on reload.
-		entry.unit = nil
-
 	end
 
 	return entry
+end
+
+function pet_lifecycle.ensure_initial_pet(player)
+	local entry = pet_lifecycle.ensure_pet_entry(player.index)
+
+	if entry.unit and entry.unit.valid then return entry.unit end
+
+	-- Find a suitable position to spawn the biter and nest.
+	local generate_decoratives = false
+	if not storage.pet_spawn_point then
+		storage.pet_spawn_point = pet_spawn.choose_orphan_spawn(player.surface, player.position)
+		generate_decoratives = true
+	end
+
+	pet_spawn.spawn_orphan_baby(player, entry, generate_decoratives)
+	return entry.unit
 end
 
 local function set_behavior_state(player_index, pet, entry, behavior)
@@ -259,11 +272,27 @@ local function evaluate_target(player_index, pet, entry, target)
 	end
 end
 
-local function ensure_pet(player_index, entry)
+local function ensure_runtime_pet(player_index, entry)
 	local player = game.get_player(player_index)
-	if not entry.unit or not entry.unit.valid then
+
+	if entry.unit and entry.unit.valid then return entry.unit end
+
+	-- Assume if unit is gone but was preivously alive then it's a lost pet.
+	if entry.was_alive then
 		pet_spawn.spawn_pet_for_player(player_index, player, entry)
 		return entry.unit
+	end
+
+	-- If pet was legitimately killed then spawn new one after random delay.
+	local now = game.tick
+	local last_death = entry.last_death_tick or 0
+
+	local remaining = math.floor((SS.ticks_per_day - (now - last_death)) / 60)
+	debug.trace(string.format("Pet spawn will trigger in %s seconds.", t.f(remaining, "f")))
+	if (now - last_death) >= SS.ticks_per_day then
+		debug.info("Spawning replacement orphan.")
+		pet_spawn.spawn_orphan_baby(player, entry, false)
+		entry.was_alive = true
 	end
 
 	return entry.unit
@@ -491,12 +520,40 @@ local function evaluate_returnable_item_state(player_index, player, pet)
 	pet_state.set_returnable_item(player_index, nil)
 end
 
-local function process_pet(player_index, entry)
+local function state_deconstruct_tree(player_index, player, pet, entry)
+	local target = pet_state.get_tree_target(player_index)
+	if not (target and target.valid) then
+		pet_state.clear_tree_target(player_index)
+		pet_state.set_behavior(player_index, "idle")
+		return
+	end
+
+	local distance = position_util.distance_squared(pet.position, target.position)
+	if distance > LC.INTERACT_RADIUS_SQUARED then
+		pet.commandable.set_command {
+			type = defines.command.go_to_location,
+			destination = target.position,
+			radius = LC.INTERACT_RADIUS,
+			distraction = defines.distraction.none
+		}
+		return
+	end
+
+	-- Start choppin'.
+	pet.commandable.set_command {
+		type = defines.command.attack,
+		target = target,
+		distraction = defines.distraction.none
+	}
+end
+
+local function process_pet(player_index)
 
 	local player = game.get_player(player_index)
 	if not is_player_valid(player) then return end
 
-	local pet = ensure_pet(player_index, entry)
+	local entry = pet_lifecycle.ensure_pet_entry(player_index)
+	local pet = ensure_runtime_pet(player_index, entry)
 	if not pet then return end
 
 	-- Sleeping branch.
@@ -537,6 +594,12 @@ local function process_pet(player_index, entry)
 		return
 	end
 
+	local tree_target = pet_state.get_tree_target(player_index)
+	if tree_target and tree_target.valid then
+		pet_state.set_behavior(player_index, "deconstruct_tree")
+		behavior = "deconstruct_tree"
+	end
+
 	-- Update time-based pet needs.
 	pet_state.tick_pet_state(player_index, entry)
 
@@ -561,6 +624,9 @@ local function process_pet(player_index, entry)
 	if behavior == "seek_item" then
 		debug.trace(string.format("Took process branch %s", t.f("SEEK_ITEM", "f")))
 		return state_seek_item(player_index, player, pet, entry)
+	elseif behavior == "deconstruct_tree" then
+		debug.trace(string.format("Took process branch %s", t.f("DECONSTRUCT_TREE", "f")))
+		return state_deconstruct_tree(player_index, player, pet, entry)
 	elseif behavior == "eat" then
 		debug.trace(string.format("Took process branch %s", t.f("EAT", "f")))
 		return state_eat(player_index, player, pet)
@@ -582,7 +648,7 @@ function pet_lifecycle.on_tick(event)
 	if (event.tick % 30) ~= 0 then return end
 	if not storage.biter_pet then return end
 	for player_index, entry in pairs(storage.biter_pet) do
-		process_pet(player_index, entry)
+		process_pet(player_index)
 		pet_behavior.process_events(player_index, entry)
 	end
 end
@@ -591,19 +657,32 @@ end
 -- Record time of adoption and calculate length of companionship.
 function pet_lifecycle.on_entity_died(event)
 	local entity = event.entity
-	if not (entity and entity.valid and entity.type == "unit") then return end
+	if not (entity and entity.valid) then return end
 
+	if entity.type == "tree" then
+		for player_index, entry in pairs(storage.biter_pet) do
+			local state = pet_state.get_state(player_index)
+			if state.tree_target == entity then
+				pet_state.clear_tree_target(player_index)
+				pet_state.set_behavior(player_index, "idle")
+			end
+		end
+		return
+	end
+
+	if entity.type ~= "unit" then return end
 	for player_index, entry in pairs(storage.biter_pet) do
-		if entry.unit == entity then
+		if entity == entry.unit then
 			debug.info("Pet death event has been triggered.");
-			local pet = entry.unit
 			entry.unit = nil
 			entry.was_alive = false
-			entry.last_death_tick = game.tick -- Record the time of death.
+
+			-- Record the time of death. 😭
+			entry.last_death_tick = game.tick
 
 			local player = game.get_player(player_index)
 			if player then notifications.notify(player, "Oh no...") end
-			break
+			return
 		end
 	end
 end

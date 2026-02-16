@@ -122,4 +122,10 @@ function pet_state_machine.enter_sleep(player_index, entry)
 	pet_state.force_emote(player_index, entry, "sleeping", false)
 end
 
+function pet_state_machine.enter_desconstruct_tree(player_index, entry, target)
+	local state = pet_state.get_state(player_index)
+	state.tree_target = target
+	pet_state.set_behavior(player_index, "desconstruct_tree")
+end
+
 return pet_state_machine

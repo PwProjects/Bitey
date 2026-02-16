@@ -192,7 +192,7 @@ local function tick_emotes(player_index, entry)
 	end
 end
 
--- Top 10 anime betrayal of all time.
+-- A top 10 anime betrayal of all time.
 function pet_state.switch_to_enemy_force(player_index, entry)
 	local pet = entry.unit
 	if not (pet and pet.valid) then return end
@@ -347,6 +347,7 @@ function pet_state.tick_pet_state(player_index, entry)
 	state.next_mood_calc_tick = state.next_mood_calc_tick or now + intervals.mood
 	if now >= state.next_mood_calc_tick then
 		debug.trace("Pet state tick firing.")
+		
 		-- Recalculate mood.
 		state.mood = mood_function(player_index)
 
@@ -402,6 +403,22 @@ function pet_state.add_hunger(player_index, delta)
 	local new_hunger = clamp(state.hunger + delta, 0, 100)
 	debug_needs_update("Hunger", new_hunger, state.hunger)
 	state.hunger = new_hunger
+end
+
+-- World ineraction.
+function pet_state.get_tree_target(player_index)
+	local state = ensure_state(player_index)
+	return state.tree_target
+end	
+
+function pet_state.set_tree_target(player_index, entity)
+	local state = ensure_state(player_index)
+	state.tree_target = entity or nil
+end
+
+function pet_state.clear_tree_target(player_index)
+	local state = ensure_state(player_index)
+	state.tree_target = nil
 end
 
 -- Item interaction.

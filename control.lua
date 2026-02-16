@@ -10,6 +10,7 @@ local function register_runtime_events()
 	script.on_event(defines.events.on_cutscene_cancelled, events.on_cutscene_cancelled)
 	script.on_event(defines.events.on_research_finished, events.on_research_finished)
 	script.on_event(defines.events.on_entity_damaged, events.on_entity_damaged)
+	script.on_event(defines.events.on_marked_for_deconstruction, events.on_marked_for_deconstruction)
 end
 
 script.on_init(function()

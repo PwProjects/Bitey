@@ -9,26 +9,12 @@ local pet_animation = require("scripts.core.pet_animation")
 
 local events = {}
 
-local function ensure_pet_exists(player)
-	local entry = pet_lifecycle.get_pet_entry(player.index)
-
-	-- Find a suitable position to spawn the biter and nest.
-	if not entry.unit or not entry.unit.valid then
-		local generate_decoratives = false
-		if not storage.pet_spawn_point then
-			storage.pet_spawn_point = pet_spawn.choose_orphan_spawn(player.surface, player.position)
-			generate_decoratives = true
-		end
-		pet_spawn.spawn_orphan_baby(player, entry, generate_decoratives)
-	end
-end
-
 function events.on_init()
 	pet_init.initialize_storage()
 	pet_init.create_orphan_force()
 	pet_init.check_existing_research()
 
-	for _, player in pairs(game.players) do ensure_pet_exists(player) end
+	for _, player in pairs(game.players) do pet_lifecycle.ensure_initial_pet(player) end
 
 	storage.mod_initialized = true
 end
@@ -41,7 +27,7 @@ function events.on_configuration_changed(cfg)
 
 	if not storage.mod_initialized then
 		for _, player in pairs(game.players) do
-			ensure_pet_exists(player)
+			pet_lifecycle.ensure_initial_pet(player)
 		end
 		storage.mod_initialized = true
 	end
@@ -63,8 +49,7 @@ function events.on_entity_damaged(event)
 end
 
 function events.on_player_created(event)
-	local player = game.get_player(event.player_index)
-	local entry = pet_lifecycle.get_pet_entry(player.index)
+	pet_lifecycle.ensure_initial_pet(event.player_index)
 end
 
 function events.on_tick(event)
@@ -77,7 +62,7 @@ function events.on_entity_died(event)
 end
 
 function events.on_cutscene_cancelled(event)
-	local entry = pet_lifecycle.get_pet_entry(event.player_index)
+	local entry = pet_lifecycle.ensure_pet_entry(event.player_index)
 	pet_behavior.record_intro_cinematic_end_tick(event.player_index, entry)
 	local player = game.get_player(event.player_index)
 
@@ -85,11 +70,27 @@ function events.on_cutscene_cancelled(event)
 	if not storage.pet_spawn_point then
 		storage.pet_spawn_point = pet_spawn.choose_orphan_spawn(player.surface, player.position)
 	end
-	pet_spawn.spawn_orphan_baby(player, entry, true)
+	if not entry.unit or not entry.unit.valid then
+		pet_spawn.spawn_orphan_baby(player, entry, true)
+	end
 end
 
 function events.on_research_finished(event)
 	pet_behavior.on_research_finished(event)
 end
+
+function events.on_marked_for_deconstruction(event)
+	local entity = event.entity
+	if entity.type ~= "tree" then return end
+
+	for player_index, entry in pairs(storage.biter_pet) do
+		-- TODO: Remove debug branch, enable default branch
+		pet_state.set_tree_target(player_index, entity)
+		-- if entry.fetch_player >= 10 then
+		-- 	pet_state.set_tree_target(player_index, entity)
+		-- end
+	end
+end
+
 
 return events
