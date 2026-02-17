@@ -1,5 +1,3 @@
--- TODO: Add small random chance for biter to investigate entity while idle and pause for a second or two.
--- This should take precedence over following, eating and sleeping, but not combat or fleeing.
 -- TODO: On player death; biter happiness should go to zero if friendship was high.
 -- Biter should follow corpse until it is picked up.
 local debug = require("scripts.utilities.debug")
@@ -177,10 +175,85 @@ local function handle_item_interaction(player_index, player, pet, entry)
 	return true
 end
 
+local function finish_investigation(player_index, pet, entry)
+	local state = pet_state.get_state(player_index)
+
+	if state.boredom >= 90 then
+		local target = entry.investigation_target
+		if target and target.valid then
+			target.damage(1, pet.force, "physical")
+			pet_state.force_emote(player_index, entry, "angry")
+		end
+	end
+
+	local emotes = LC.INVESTIGATION_EMOTES
+	pet_state.force_emote(player_index, entry, emotes[math.random(#emotes)])
+	pet_state.pause(player_index, 120)
+	entry.investigateing = false
+	entry.investigation_target = nil
+	pet_state.clear_idle_target(player_index)
+end
+
+local function state_investigation(player_index, pet, entry)
+	local target = entry.investigation_target
+
+	if not (target and target.valid) then
+		entry.investigating = false
+		entry.investigation_target = nil
+		return
+	end
+
+	if position_util.distance_squared(pet.position, target.position) < LC.INTERACT_RADIUS_SQUARED then
+		finish_investigation(player_index, pet, entry)
+		return
+	end
+
+	-- TODO: Get offset vector so pet doesn't path into entity.
+	pet.commandable.set_command {
+		type = defines.command.go_to_location,
+		destination = target.position,
+		distraction = defines.distraction.none,
+		pathfind_flags = {
+			allow_paths_through_own_entities = true
+		}
+	}
+
+end
+
+local function try_starting_investigation(player_index, player, pet, entry)
+	local entities = pet.surface.find_entities_filtered {
+		position = pet.position,
+		radius = LC.INVESTIGATION_RADIUS,
+		force = "player",
+		type = LC.INVESTIGATION_TARGETS
+	}
+
+	if #entities == 0 then return false end
+
+	local target = entities[math.random(#entities)]
+
+	entry.investigating = true
+	entry.investigation_target = target
+
+	pet_state.pause(player_index, 60)
+	pet_state.force_emote(player_index, entry, "investigate")
+	return true
+end
+
 -- TODO: Randomize idle state between wandering, pausing and investigating for random intervals.
 -- TODO: Ignore follow radius when behavior is investigate.
 local function state_idle(player_index, player, pet, entry)
 	if not (pet and pet.valid) then return end
+
+	if entry.investigating then
+		state_investigation(player_index, pet, entry)
+		return
+	end
+
+	-- Investigate some stuff.
+	if math.random() < LC.INVESTIGATION_CHANCE then
+		if try_starting_investigation(player_index, player, pet, entry) then return end
+	end
 
 	local radius = LC.FOLLOW_RADIUS_BY_TIER[pet.name] or LC.PET_FOLLOW_RADIUS
 	local tether = entry.is_orphaned and (storage.pet_spawn_point or pet.position) or player.position

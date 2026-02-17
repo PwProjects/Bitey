@@ -59,7 +59,42 @@ return {
 	INTERACT_RADIUS_SQUARED = 1.5 * 1.5,
 	DECONSTRUCTION_RADIUS = 25,
 	DECONSTRUCTION_RADIUS_SQUARED = 25 * 25,
-	
+	INVESTIGATION_CHANCE = 0.1,
+	INVESTIGATION_RADIUS = 20,
+	INVESTIGATION_TARGETS = {
+		"accumulator",
+		"agricultural-tower",
+		"ammo-turret",
+		"assembling-machine",
+		"beacon",
+		"boiler",
+		"car",
+		"container",
+		"display-panel",
+		"electric-pole",
+		"electric-turret",
+		"furnace",
+		"generator",
+		"pipe-to-ground",
+		"pump",
+		"radar",
+		"roboport",
+		"rocket-silo",
+		"solar-panel",
+		"spider-vehicle",
+		"underground-belt"
+	},
+	INVESTIGATION_EMOTES = {
+		"confused",
+		"scared",
+		"home",
+		"defend",
+		"cringe",
+		"happy",
+		"love",
+		"horrified"
+	},
+
 	-- Eating.
 	SEEK_FOOD_HUNGER_THRESHOLD = 5,
 	SEEK_WATER_THIRST_THRESHOLD = 5,
