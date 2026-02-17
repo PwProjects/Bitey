@@ -1,26 +1,23 @@
 local SPAWN_SETTINGS = {
-	spawn_search_radius = 6,
-	search_precision = 0.5,
+	spawn_search_radius = 6, -- Default: 6
+	search_precision = 0.5, -- Default: 0.5
 
-	minimum_spawn_distance = 100, -- don't go far over 32 else you risk spawning in unloaded chunks.
-	maximum_spawn_offset = 150,
+	minimum_spawn_distance = 100, -- Default: 100
+	maximum_spawn_offset = 150, -- Default: 150
 
-	ticks_per_day = 25200 -- the standard day length on nauvis.
+	ticks_per_day = 25200, -- Default: 25200
+	ticks_per_year = 3600 -- Default: 9198000
 }
 
 local STATE_DEFAULTS = {
-	boredom = 50,
-	evolution = 0,
-	friendship = 0,
-	happiness = 0,
-	hunger = 100,
-	morph = 0,
-	thirst = 0,
-	tiredness = 50,
-	feeding_target = nil,
-	attack_target = nil,
-	item_interaction = nil
-
+	boredom = 50, -- Default: 50
+	evolution = 0, -- Default: 0
+	friendship = 0, -- Default: 0
+	happiness = 0, -- Default: 0
+	hunger = 100, -- Default: 100
+	morph = 0, -- Default: 0
+	thirst = 0, -- Default: 0
+	tiredness = 50, -- Default: 50
 }
 
 local ORPHAN_MAP = {

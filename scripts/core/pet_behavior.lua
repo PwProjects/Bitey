@@ -8,6 +8,7 @@ local t = require("scripts.utilities.text_format")
 
 local BM = require("scripts.constants.biters").BITER_MAP
 local BT = require("scripts.constants.thresholds").BEHAVIORAL_THRESHOLDS
+local DC = require("scripts.constants.debug")
 local ES = require("scripts.constants.events")
 
 local pet_behavior = {}
@@ -27,7 +28,7 @@ local function process_intro_notification(player_index, entry)
 	end
 
 	if entry.intro_end_tick and not entry.intro_notification_sent then
-		if now > entry.intro_pet_alert_threshold then
+		if now > entry.intro_pet_alert_threshold or DC.DEBUG_BYPASS_INTRO_DELAY then
 			local direction = position_util.get_direction_of_position(player.position, pet.position)
 			if direction then
 				notifications.notify(player, string.format("I heard something to the %s...", direction))
@@ -90,8 +91,8 @@ function pet_behavior.on_pet_damaged(player_index, entry, event)
 		pet_state.force_emote(player_index, entry, "angry")
 	end
 
-	local attacker_force = event.force
-	if attacker_force ~= player.force then return end
+	-- Check origin of damage.
+	if event.force ~= player.force then return end
 
 	-- Evaluate friendly-fire.
 	local maximum_health = entry.unit.prototype.get_max_health()

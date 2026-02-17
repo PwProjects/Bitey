@@ -7,6 +7,8 @@ local pet_behavior = require("scripts.core.pet_behavior")
 local pet_visuals = require("scripts.core.pet_visuals")
 local pet_animation = require("scripts.core.pet_animation")
 
+local DC = require("scripts.constants.debug")
+
 local events = {}
 
 function events.on_init()
@@ -14,7 +16,7 @@ function events.on_init()
 	pet_init.create_orphan_force()
 	pet_init.check_existing_research()
 
-	for _, player in pairs(game.players) do pet_lifecycle.ensure_initial_pet(player) end
+	for _, player in pairs(game.players) do pet_lifecycle.ensure_initial_pet(player.index) end
 
 	storage.mod_initialized = true
 end
@@ -27,7 +29,7 @@ function events.on_configuration_changed(cfg)
 
 	if not storage.mod_initialized then
 		for _, player in pairs(game.players) do
-			pet_lifecycle.ensure_initial_pet(player)
+			pet_lifecycle.ensure_initial_pet(player.index)
 		end
 		storage.mod_initialized = true
 	end
@@ -80,15 +82,14 @@ function events.on_research_finished(event)
 end
 
 function events.on_marked_for_deconstruction(event)
+	local entry = pet_lifecycle.ensure_pet_entry(event.player_index)
 	local entity = event.entity
 	if entity.type ~= "tree" then return end
 
 	for player_index, entry in pairs(storage.biter_pet) do
-		-- TODO: Remove debug branch, enable default branch
-		pet_state.set_tree_target(player_index, entity)
-		-- if entry.fetch_player >= 10 then
-		-- 	pet_state.set_tree_target(player_index, entity)
-		-- end
+		if (entry.fetch_plays and entry.fetchplays >= 10) or DC.DEBUG_BYPASS_DECONSTRUCTION_GATE then
+			pet_state.set_tree_target(player_index, entity)
+		end
 	end
 end
 

@@ -30,11 +30,7 @@ local function ensure_state(player_index)
 			hunger = SD.hunger,
 			morph = SD.morph,
 			thirst = SD.thirst,
-			tiredness = SD.tiredness,
-			current_form = SD.current_form,
-			feeding_target = SD.feeding_target,
-			attack_target = SD.attack_target,
-			item_interaction = SD.item_interaction
+			tiredness = SD.tiredness
 		}
 		storage.pet_state[player_index] = state
 	else
@@ -46,12 +42,16 @@ local function ensure_state(player_index)
 		state.morph = state.morph or SD.morph
 		state.thirst = state.thirst or SD.thirst
 		state.tiredness = state.tiredness or SD.tiredness
-		state.feeding_target = state.feeding_target or SD.feeding_target
-		state.attack_target = state.attack_target or SD.attack_target
-		state.item_interaction = state.item_interaction or SD.item_interaction
 	end
 
 	return state
+end
+
+function pet_state.reset_state_to_defaults(player_index)
+	local state = ensure_state(player_index)
+	for key, value in pairs(SD) do
+		state[key] = value
+	end
 end
 
 function pet_state.get_state(player_index)
@@ -444,13 +444,20 @@ end
 
 function pet_state.set_item_target(player_index, entity)
 	local state = ensure_state(player_index)
-	state.feeding_target = entity or nil
+	state.item_target = entity or nil
 end
 
 function pet_state.get_item_target(player_index)
 	local state = ensure_state(player_index)
-	return state.feeding_target
+	return state.item_target
 end
+
+function pet_state.clear_item_target(player_index)
+	local state = ensure_state(player_index)
+	state.item_target = nil
+end
+
+-- Feeding functions.
 
 function pet_state.set_idle_target(player_index, entity)
 	local state = ensure_state(player_index)
@@ -460,6 +467,11 @@ end
 function pet_state.get_idle_target(player_index, entity)
 	local state = ensure_state(player_index)
 	return state.idle_target
+end
+
+function pet_state.clear_idle_target(player_index)
+	local state = ensure_state(player_index)
+	state.idle_target = nil
 end
 
 -- Thirst functions.

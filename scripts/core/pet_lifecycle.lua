@@ -5,6 +5,7 @@
 local debug = require("scripts.utilities.debug")
 local notifications = require("scripts.utilities.notifications")
 local pet_behavior = require("scripts.core.pet_behavior")
+local pet_birthday = require("scripts.core.pet_birthday")
 local pet_growth = require("scripts.core.pet_growth")
 local pet_modifiers = require("scripts.core.pet_modifiers")
 local pet_morph = require("scripts.core.pet_morph")
@@ -20,6 +21,7 @@ local t = require("scripts.utilities.text_format")
 local BM = require("scripts.constants.biters").BITER_MAP
 local ID = require("scripts.constants.reactions").ITEM_DEFINITIONS
 local SS = require("scripts.constants.spawn").SPAWN_SETTINGS
+local BG = require("scripts.constants.gifts").BIRTHDAY_GIFTS
 local DC = require("scripts.constants.debug")
 local LC = require("scripts.constants.lifecycle")
 local TF = require("scripts.constants.text_format")
@@ -62,9 +64,11 @@ function pet_lifecycle.ensure_pet_entry(player_index)
 	return entry
 end
 
-function pet_lifecycle.ensure_initial_pet(player)
-	local entry = pet_lifecycle.ensure_pet_entry(player.index)
+function pet_lifecycle.ensure_initial_pet(player_index)
+	local player = game.get_player(player_index)
+	if not player then return end
 
+	local entry = pet_lifecycle.ensure_pet_entry(player_index)
 	if entry.unit and entry.unit.valid then return entry.unit end
 
 	-- Find a suitable position to spawn the biter and nest.
@@ -120,7 +124,6 @@ local function find_nearest_interactable_item(player_index, pet, entry)
 		if name == returnable_item then goto continue end
 
 		local interactable_item = ID[name]
-
 		if not interactable_item then goto continue end
 
 		local passes_need_check = (not interactable_item.need_check) or interactable_item.need_check(needs)
@@ -144,7 +147,7 @@ local function handle_item_interaction(player_index, player, pet, entry)
 
 	-- Pathing target disappeared.
 	if not (target and target.valid) then
-		pet_state.set_item_target(player_index, nil)
+		pet_state.clear_item_target(player_index)
 		return false
 	end
 
@@ -175,7 +178,7 @@ local function handle_item_interaction(player_index, player, pet, entry)
 end
 
 -- TODO: Randomize idle state between wandering, pausing and investigating for random intervals.
--- TODO: Ignore follow radius when behaivor is investigate.
+-- TODO: Ignore follow radius when behavior is investigate.
 local function state_idle(player_index, player, pet, entry)
 	if not (pet and pet.valid) then return end
 
@@ -199,7 +202,7 @@ local function state_idle(player_index, player, pet, entry)
 
 	-- Clear idle target and find a new one on the next tick.
 	if position_util.distance_squared(pet.position, idle_target) < 1 then
-		pet_state.set_idle_target(player_index, nil)
+		pet_state.clear_idle_target(player_index)
 		return
 	end
 
@@ -289,7 +292,7 @@ local function ensure_runtime_pet(player_index, entry)
 
 	local remaining = math.floor((SS.ticks_per_day - (now - last_death)) / 60)
 	debug.trace(string.format("Pet spawn will trigger in %s seconds.", t.f(remaining, "f")))
-	if (now - last_death) >= SS.ticks_per_day then
+	if (now - last_death) >= SS.ticks_per_day or DC.DEBUG_BYPASS_RESPAWN_DELAY then
 		debug.info("Spawning replacement orphan.")
 		pet_spawn.spawn_orphan_baby(player, entry, false)
 		entry.was_alive = true
@@ -331,12 +334,9 @@ local function biter_was_adopted(player, player_index, pet, entry)
 			pet = entry.unit
 			entry.is_orphaned = false
 			pet.force = player.force
-			pet_state.set_idle_target(player_index, nil)
+			pet_state.clear_idle_target(player_index)
 			debug.info("Pet has been successfully adopted.")
-			notifications.notify(player, pet, {
-				type = "entity",
-				name = BM[entry.biter_tier].base_equivalent
-			}, "I think it's starting to trust me...", "utility/achievement_unlocked")
+			notifications.notify(player, "I think it's starting to trust me...", "utility/achievement_unlocked")
 			return true
 		end
 	end
@@ -382,7 +382,7 @@ local function state_follow(player_index, player, pet, entry)
 
 	local radius = LC.FOLLOW_RADIUS_BY_TIER[pet.name] or LC.PET_FOLLOW_RADIUS
 	if distance_squared <= (radius * radius) then
-		pet_state.set_idle_target(player_index, nil)
+		pet_state.clear_idle_target(player_index)
 		pet_state.set_behavior(player_index, "idle")
 		return
 	end
@@ -435,7 +435,7 @@ local function state_attack(player_index, player, pet, entry)
 	local max_health = pet.prototype.get_max_health()
 
 	local pet_should_flee = (pet_health < target_health) and (pet_health / max_health) < LC.PET_FLEE_THRESHOLD
-	if LC.PET_IS_SCAREDY_CAT or pet_should_flee then
+	if DC.DEBUG_SCAREDY_CAT or pet_should_flee then
 		pet_state.set_behavior(player_index, "flee")
 		return
 	end
@@ -448,8 +448,8 @@ local function state_attack(player_index, player, pet, entry)
 end
 
 local function state_return_item(player_index, player, pet, entry)
-
 	local item_name = pet_state.get_returnable_item(player_index)
+
 	if not item_name then
 		pet_state.set_behavior(player_index, "idle")
 		return
@@ -463,14 +463,11 @@ local function state_return_item(player_index, player, pet, entry)
 	if distance_squared <= LC.INTERACT_RADIUS_SQUARED then
 		player.surface.spill_item_stack {
 			position = drop_position,
-			stack = {
-				name = item_name,
-				count = 1
-			},
+			stack = item_name,
 			enabled_looted = true,
 			max_radius = 2
 		}
-		notifications.fetch_flavor_text(player, entry)
+		notifications.fetch_flavor_text(player_index, player, entry, item_name)
 		pet_state.set_behavior(player_index, "idle")
 		pet_state.pause(player_index, 60)
 	end
@@ -547,6 +544,22 @@ local function state_deconstruct_tree(player_index, player, pet, entry)
 	}
 end
 
+local function tree_target_in_deconstruct_radius(player_index, player, tree_target)
+	local distance_squared = position_util.distance_squared(player.position, tree_target.position)
+	if distance_squared > LC.DECONSTRUCTION_RADIUS_SQUARED then return false end
+	return true
+end
+
+local function evaluate_birthday(player_index, player, entry)
+	if not entry.birthday_tick then return end
+	if entry.is_orphaned then return end
+
+	local now = game.tick
+	if (now - entry.birthday_tick) < SS.ticks_per_year then return end
+
+	pet_birthday.give_birthday_gift(player_index, player, entry)
+end
+
 local function process_pet(player_index)
 
 	local player = game.get_player(player_index)
@@ -565,6 +578,8 @@ local function process_pet(player_index)
 
 	-- Enable debugging visualizers.
 	debug.visualize_behavioral_radii(player_index)
+
+	evaluate_birthday(player_index, player, entry)
 
 	local behavior = pet_state.get_behavior(player_index)
 
@@ -597,6 +612,13 @@ local function process_pet(player_index)
 	local state = pet_state.get_state(player_index)
 	local tree_target = pet_state.get_tree_target(player_index)
 	if tree_target and tree_target.valid then
+
+		if not tree_target_in_deconstruct_radius(player_index, player, tree_target) then
+			pet_state.clear_tree_target(player_index)
+			pet_state.set_behavior(player_index, "idle")
+			return
+		end
+
 		if state.last_tree_target ~= tree_target then
 			pet_state.force_emote(player_index, entry, "work")
 			state.last_tree_target = tree_target
@@ -659,8 +681,6 @@ function pet_lifecycle.on_tick(event)
 	end
 end
 
--- TODO: Change notification depending on whether biter died as orphan, killed by player, age of pet, etc.
--- Record time of adoption and calculate length of companionship.
 function pet_lifecycle.on_entity_died(event)
 	local entity = event.entity
 	if not (entity and entity.valid) then return end
@@ -683,12 +703,30 @@ function pet_lifecycle.on_entity_died(event)
 			debug.info("Pet death event has been triggered.");
 			entry.unit = nil
 			entry.was_alive = false
-
+			entry.fetch_plays = 0
 			-- Record the time of death. 😭
 			entry.last_death_tick = game.tick
 
+			pet_state.reset_state_to_defaults(player_index)
+
+			pet_state.clear_attack_target(player_index)
+			pet_state.clear_tree_target(player_index)
+			pet_state.clear_idle_target(player_index)
+			pet_state.clear_item_target(player_index)
+
+			local state = pet_state.get_state(player_index)
+			state.last_tree_target = nil
+			entry.is_orphaned = true
+			entry.current_form = "active"
+
 			local player = game.get_player(player_index)
-			if player then notifications.notify(player, "Oh no...") end
+
+			-- Check origin of damage.
+			if event.force == player.force then
+				if player then notifications.notify(player, "I'm a monster...") end
+			else
+				if player then notifications.notify(player, "No...") end
+			end
 			return
 		end
 	end

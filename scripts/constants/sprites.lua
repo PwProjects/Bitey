@@ -112,7 +112,7 @@ local SPRITE_MAP = {
 		sprite = "angry"
 	},
 	gift = {
-		sprite = "item/wooden-chest"
+		sprite = "gift"
 	},
 	hurt = {
 		sprite = "entity/behemoth-biter-die"

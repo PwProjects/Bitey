@@ -1,7 +1,3 @@
-local GROWTH_SETTINGS = {	
-	DEBUG_IGNORE_EVOLUTION_GATES = false, -- NOTE: Change back to false after debugging evolution.
-}
-
 -- Growth tiers and thresholds.
 local GROWTH_RULES = {
 	["pet-small-biter-baby"] = {

@@ -1,4 +1,5 @@
 local debug = require("scripts.utilities.debug")
+local pet_state = require("scripts.core.pet_state")
 
 local FT = require("scripts.constants.notifications").FETCH_FLAVOR_TEXT
 
@@ -39,7 +40,15 @@ function notifications.notify(player, message, sound)
 	end
 end
 
-function notifications.fetch_flavor_text(player, entry)
+function notifications.fetch_flavor_text(player_index, player, entry, item_name)
+	if item_name ~= "wood" then
+		pet_state.add_happiness(player_index, 25)
+		pet_state.force_emote(player_index, entry, "ecstatic", true)
+		pet_state.force_emote(player_index, entry, "gift", false)
+		notifications.notify(player, "Wow! Has it been a year already?", "utility/achievement_unlocked")
+		return
+	end
+
 	local count = #FT
 	if count == 0 then return end
 	local index = (entry.fetch_plays % count) + 1

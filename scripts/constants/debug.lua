@@ -1,13 +1,19 @@
 return {
-	DEBUG_DEFAULT_LEVEL = 0,
+	-- NOTE: All debug options should be false by default.
+	DEBUG_DEFAULT_LEVEL = 0, -- 0:None, 1:Error, 2:Warn, 3:Info, 4:Trace
+	DEBUG_BYPASS_DECONSTRUCTION_GATE = true,
+	DEBUG_BYPASS_INTRO_DELAY = true,
+	DEBUG_BYPASS_RESPAWN_DELAY = false,
 	DEBUG_ENABLE_RATE_LIMITER = false,
-	DEBUG_RATE_LIMIT = 30, -- Limit to 1 message per DEBUG_RATE_LIMIT ticks per module.
+	DEBUG_IGNORE_EVOLUTION_GATES = false,
+	DEBUG_MOOD_ENABLED = false,
+	DEBUG_RATE_LIMIT = 30,
+	DEBUG_SCAREDY_CAT = false,
+	DEBUG_SHOW_NEEDS_UPDATES = false,
+	DEBUG_VISUALIZERS_ENABLED = false,
 
 	ICON = "[img=biter-pet]",
 
-	DEBUG_VISUALIZERS_ENABLED = false,
-	DEBUG_SHOW_NEEDS_UPDATES = true,
-	DEBUG_MOOD_ENABLED = false,
 	DEBUG_VISUALIZE_STATE_OFFSET = {
 		0.65,
 		-0.75

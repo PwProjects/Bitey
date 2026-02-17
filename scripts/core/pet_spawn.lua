@@ -29,7 +29,8 @@ function pet_spawn.choose_orphan_spawn(surface, origin)
 		surface.force_generate_chunk_requests()
 
 		if not surface.get_tile(position).collides_with("water_tile") then
-			local valid = surface.find_non_colliding_position("pet-small-biter-baby", position, SS.spawn_search_radius, SS.search_precision)
+			local valid = surface.find_non_colliding_position("pet-small-biter-baby", position, SS.spawn_search_radius,
+					SS.search_precision)
 			if valid then
 				successes = successes + 1
 				position_candidates[#position_candidates + 1] = valid
@@ -56,7 +57,7 @@ end
 
 function pet_spawn.spawn_orphan_baby(player, entry, generate_decoratives)
 	local surface = player.surface
-	local species = SS[entry.current_species] or "pet-small-biter-baby"
+	local species = "pet-small-biter-baby"
 
 	-- Store orphan respawn point in the event pet dies.
 	if not storage.pet_spawn_point then storage.pet_spawn_point = pet_spawn.choose_orphan_spawn(surface, player.position) end
@@ -82,6 +83,8 @@ function pet_spawn.spawn_orphan_baby(player, entry, generate_decoratives)
 
 	entry.unit = pet
 	entry.is_orphaned = true
+	entry.time_of_spawn = game.tick
+	entry.birthday_tick = game.tick
 	entry.biter_tier = species
 	debug.info("Orphaned biter has spawned.")
 end

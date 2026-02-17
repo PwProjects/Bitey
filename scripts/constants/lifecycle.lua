@@ -3,7 +3,6 @@ return {
 	PET_ATTACK_RADIUS = 5.0,
 
 	-- Fleeing.
-	PET_IS_SCAREDY_CAT = false, -- NOTE: Enable to debug and trace flee mechanics.
 	PET_SAFE_THRESHOLD = 0.75, -- Pet will stop fleeing when percentage of health is above this threshold.
 	PET_FLEE_THRESHOLD = 0.50, -- Pet will flee when percentage of health is below this value.
 	PET_FLEE_SAFE_DISTANCE = 50, -- Distance in tiles pet will flee from danger.
@@ -58,7 +57,9 @@ return {
 	ITEM_SEARCH_RADIUS = 8,
 	INTERACT_RADIUS = 1.5,
 	INTERACT_RADIUS_SQUARED = 1.5 * 1.5,
-
+	DECONSTRUCTION_RADIUS = 25,
+	DECONSTRUCTION_RADIUS_SQUARED = 25 * 25,
+	
 	-- Eating.
 	SEEK_FOOD_HUNGER_THRESHOLD = 5,
 	SEEK_WATER_THIRST_THRESHOLD = 5,
