@@ -1,3 +1,7 @@
+-- TODO: Pet not attacking closest enemy.
+-- TODO: Fix play dead.
+-- TODO: Worms attack any player that damages.
+
 local debug = require("scripts.utilities.debug")
 local pet_lifecycle = require("scripts.core.pet_lifecycle")
 local pet_state = require("scripts.core.pet_state")
@@ -44,7 +48,7 @@ end
 
 local function evaluate_pet_damage(player_index, entry, event, entity)
 	if entry.unit ~= entity then return end
-	pet_behavior.on_pet_damaged(player_index, entry, event, entity)
+	pet_lifecycle.on_pet_damaged(player_index, entry, event, entity)
 end
 
 local function compute_diminished_total(buff_list)
@@ -117,13 +121,21 @@ function events.on_entity_damaged(event)
 	end
 end
 
+local function permanent_night()
+	local s = game.surfaces["nauvis"]
+	s.daytime = 0.85
+	s.freeze_daytime = true
+end
+
 function events.on_player_created(event)
 	pet_lifecycle.ensure_initial_pet(event.player_index)
+	permanent_night()
 end
 
 function events.on_tick(event)
 	pet_lifecycle.on_tick(event)
 	pet_animation.animate_pet_reaction_icon()
+	pet_memorial.on_tick(event)
 end
 
 function events.on_entity_died(event)
@@ -307,7 +319,8 @@ function events.on_built_entity(event)
 		player_index = event.player_index,
 		bond_level = entry.last_death_bond_level or 1,
 		species = entry.current_species,
-		was_crafting = false
+		was_crafting = false,
+		next_wisp_tick = game.tick + math.random(30, 90)
 	}
 end
 

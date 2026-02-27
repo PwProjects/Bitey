@@ -4,10 +4,10 @@ local notifications = require("scripts.utilities.notifications")
 local pet_modifiers = require("scripts.core.pet_modifiers")
 local pet_state = require("scripts.core.pet_state")
 local position_util = require("scripts.utilities.position_util")
+
 local t = require("scripts.utilities.text_format")
 
 local BM = require("scripts.constants.biters").BITER_MAP
-local BT = require("scripts.constants.thresholds").BEHAVIORAL_THRESHOLDS
 local LC = require("scripts.constants.lifecycle")
 local DC = require("scripts.constants.debug")
 local ES = require("scripts.constants.events")
@@ -75,46 +75,6 @@ function pet_behavior.on_research_finished(event)
 				state.has_fluid_handling = true
 			end
 		end
-	end
-end
-
-function pet_behavior.on_pet_damaged(player_index, entry, event)
-	local state = pet_state.get_state(player_index)
-	local player = game.get_player(player_index)
-
-	state.attack_target = player.character
-	pet_state.set_behavior(player_index, "flee")
-
-	if entry.current_form == "sleeping" then
-		pet_state.set_behavior(player_index, "active")
-		pet_state.force_emote(player_index, entry, "angry")
-	end
-
-	-- Check origin of damage.
-	if event.force ~= player.force then return end
-
-	-- Evaluate friendly-fire.
-	local maximum_health = entry.unit.prototype.get_max_health()
-	local current_health = entry.unit.health
-	local damage = event.final_damage_amount
-
-	local is_full_health = (current_health >= maximum_health)
-	local damage_insignificant = (damage <= maximum_health * 0.1)
-
-	if state.friendship < BT.friendship_total_betrayal then
-		pet_modifiers.apply_friendly_fire_modifiers(player_index, entry, "total_betrayal")
-		pet_state.force_emote(player_index, entry, "angry")
-		pet_state.switch_to_enemy_force(player_index, entry)
-	elseif state.friendship < BT.friendship_mild_betrayal then
-		pet_modifiers.apply_friendly_fire_modifiers(player_index, entry, "mild_betrayal")
-		pet_state.force_emote(player_index, entry, "very-sad")
-	elseif state.friendship >= BT.friendship_playing_dead and is_full_health and damage_insignificant then
-		pet_modifiers.apply_friendly_fire_modifiers(player_index, entry, "playing-dead")
-		pet_state.force_emote(player_index, entry, "playing-dead")
-		pet_state.force_emote(player_index, entry, "silly")
-	else
-		pet_modifiers.apply_friendly_fire_modifiers(player_index, entry, "betrayal")
-		pet_state.force_emote(player_index, entry, "scared")
 	end
 end
 

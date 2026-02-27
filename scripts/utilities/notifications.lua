@@ -20,6 +20,7 @@ local PSD = require("scripts.constants.notifications").PET_SENSES_DANGER_FLAVOR_
 local PUR = require("scripts.constants.notifications").PICKUP_REMAINS_FLAVOR_TEXT
 local PLL = require("scripts.constants.notifications").PICKUP_LONG_LIVED_REMAINS_FLAVOR_TEXT
 local PRF = require("scripts.constants.notifications").PLAYER_RESURRECTED_FLAVOR_TEXT
+local PGF = require("scripts.constants.notifications").PET_GROWTH_FLAVOR_TEXT
 
 local notifications = {}
 
@@ -118,6 +119,13 @@ function notifications.fetch_flavor_text(player_index, player, entry, item_name)
 	local index = (entry.fetch_plays % count) + 1
 	local message = FFT[index]
 	notifications.notify(player, message)
+end
+
+function notifications.pet_growth_flavor_text(player, entry)
+	if not (player and player.valid) then return end
+	if not can_show_flavor(entry) then return end
+	local message = PGF[math.random(#PGF)]
+	notifications.notify(player, message, "utility/achievement_unlocked")	
 end
 
 function notifications.player_resurrected_flavor_text(player, entry)

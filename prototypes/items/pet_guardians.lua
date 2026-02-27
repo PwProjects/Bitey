@@ -40,7 +40,7 @@ local function apply_base_tint(animation_block)
 	if not (animation_block and animation_block.layers) then return end
 	local body_layer = animation_block.layers[1]
 	body_layer.tint = {r = 0.5, g = 0.7, b = 1.0, a = 1.0}
-	if body_layer.hr_version then body_layer.hr_version.tint = base_color end
+	if body_layer.hr_version then body_layer.hr_version.tint = {r = 0.5, g = 0.7, b = 1.0, a = 1.0} end
 end
 
 local function add_all_glow_masks(prototype)
@@ -56,31 +56,29 @@ local function add_all_glow_masks(prototype)
 
 	for _, state in ipairs(states) do
 		if prototype[state] then
+			prototype[state] = table.deepcopy(prototype[state])
 			apply_base_tint(prototype[state])
 			apply_glow_to_animation(prototype[state])
 		end
 	end
 end
 
-local small = table.deepcopy(data.raw["turret"]["small-worm-turret"])
-small.name = "memorial-small-worm"
-add_all_glow_masks(small)
+local function create_memorial_prototype(base_name, new_name)
+    local prototype = table.deepcopy(data.raw["turret"][base_name])
+    prototype.name = new_name
+	prototype.autoplace = nil
+    add_all_glow_masks(prototype)    
+    return prototype
+end
 
-local medium = table.deepcopy(data.raw["turret"]["medium-worm-turret"])
-medium.name = "memorial-medium-worm"
-add_all_glow_masks(medium)
-
-local big = table.deepcopy(data.raw["turret"]["big-worm-turret"])
-big.name = "memorial-big-worm"
-add_all_glow_masks(big)
-
-local behemoth = table.deepcopy(data.raw["turret"]["behemoth-worm-turret"])
-behemoth.name = "memorial-behemoth-worm"
-add_all_glow_masks(behemoth)
+local memorial_small = create_memorial_prototype("small-worm-turret", "memorial-small-worm")
+local memorial_medium = create_memorial_prototype("medium-worm-turret", "memorial-medium-worm")
+local memorial_big = create_memorial_prototype("big-worm-turret", "memorial-big-worm")
+local memorial_behemoth = create_memorial_prototype("behemoth-worm-turret", "memorial-behemoth-worm")
 
 data:extend{
-	small,
-	medium,
-	big,
-	behemoth
+	memorial_small,
+	memorial_medium,
+	memorial_big,
+	memorial_behemoth
 }

@@ -159,6 +159,21 @@ local PLAYER_RESURRECTED_FLAVOR_TEXT = {
 	"Still in one piece..."
 }
 
+local PET_GROWTH_FLAVOR_TEXT = {
+	"You're getting stronger...",
+	"You're growing fast...",
+	"You look bigger...",
+	"You look stronger...",
+	"Absolute unit...",
+	"Who's a big boy?",
+	"You been lifting?",
+	"Fish is doing you wonders...",
+	"Are you molting?",
+	"Getting swole...",
+	"You're gonna need a bigger bed...",
+	"They grow up so fast..."
+}
+
 local PETTING_MODIFIERS_AND_SETTINGS = {
 	PETTING_FLAVOR_TEXT_COOLDOWN = 60 * 5,
 	PETTING_REWARD_COOLDOWN = 60 * 60 * 5,
@@ -193,5 +208,6 @@ return {
 	PET_SENSES_DANGER_FLAVOR_TEXT = PET_SENSES_DANGER_FLAVOR_TEXT,
 	PICKUP_REMAINS_FLAVOR_TEXT = PICKUP_REMAINS_FLAVOR_TEXT,
 	PICKUP_LONG_LIVED_REMAINS_FLAVOR_TEXT = PICKUP_LONG_LIVED_REMAINS_FLAVOR_TEXT,
-	PLAYER_RESURRECTED_FLAVOR_TEXT = PLAYER_RESURRECTED_FLAVOR_TEXT
+	PLAYER_RESURRECTED_FLAVOR_TEXT = PLAYER_RESURRECTED_FLAVOR_TEXT,
+	PET_GROWTH_FLAVOR_TEXT = PET_GROWTH_FLAVOR_TEXT
 }

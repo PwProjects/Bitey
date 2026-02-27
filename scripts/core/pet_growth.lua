@@ -83,10 +83,7 @@ function pet_growth.try_grow(player_index, entry)
 		pet = entry.unit
 		if not (pet and pet.valid) then return end
 		local player = game.get_player(player_index)
-		notifications.notify(player, pet, {
-			type = "entity",
-			name = BM[entry.biter_tier].base_equivalent
-		}, string.format("The biter seems to be getting stronger..."), "utility/achievement_unlocked")
+		notifications.pet_growth_flavor_text(player, entry)
 	end
 end
 

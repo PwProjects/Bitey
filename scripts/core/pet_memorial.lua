@@ -33,7 +33,6 @@ local function get_turret_positions(entity)
 	}
 end
 
--- TODO: Worms attack any player that damages.
 local function spawn_guardians(entity, data)
 	local bond_level = data.bond_level
 	local force = data.force
@@ -59,11 +58,7 @@ local function players_near_memorial(entity)
 			"tank",
 			"spider-vehicle"
 		}
-	}) do
-		if position_util.distance_squared(blocking_entity.position, position) <= (radius_squared) then
-			return true
-		end
-	end
+	}) do if position_util.distance_squared(blocking_entity.position, position) <= (radius_squared) then return true end end
 	return false
 end
 
@@ -91,6 +86,27 @@ function pet_memorial.monitor_memorials(event)
 			end
 
 			data.was_crafting = crafting
+		end
+	end
+end
+
+local function spawn_memorial_wisps(entity, data, tick)
+	if tick < data.next_wisp_tick then return end
+	data.next_wisp_tick = tick + math.random(30, 90)
+	entity.surface.create_entity {
+		name = "memorial-wisp-spawner",
+		position = entity.position
+	}
+end
+
+function pet_memorial.on_tick(event)
+	if (event.tick % 15) ~= 0 then return end
+	for id, data in pairs(pet_memorial.memorials) do
+		local entity = data.entity
+		if not entity.valid then
+			pet_memorial.memorials[id] = nil
+		else
+			spawn_memorial_wisps(entity, data, event.tick)
 		end
 	end
 end

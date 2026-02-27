@@ -7,7 +7,7 @@ return {
 
 	-- Fleeing.
 	PET_SAFE_THRESHOLD = 0.80, -- Default: 0.80
-	PET_FLEE_THRESHOLD = 0.50, -- Default: 0.50
+	PET_FLEE_THRESHOLD = 0.25, -- Default: 0.25
 	PET_FLEE_SAFE_DISTANCE = 50, -- Default: 50
 	PET_FLEE_HAPPINESS_PENALTY = -5, -- Default: -5
 	PET_FLEE_HUNGER_PENALTY = 8, -- Default: 8
