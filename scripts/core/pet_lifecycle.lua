@@ -696,6 +696,25 @@ local function evaluate_birthday(player_index, player, entry)
 	pet_birthday.give_birthday_gift(player_index, player, entry)
 end
 
+local function evaluate_if_pet_is_on_belt(player_index, entry, pet)
+	if not (pet and pet.valid) then return end
+	if #pet.surface.find_entities_filtered {
+		position = pet.position,
+		type = "transport-belt"
+	} == 0 then return end
+
+	local now = game.tick
+	local last_reaction_tick = entry.last_belt_reaction_tick or 0
+	if now >= (last_reaction_tick + LC.PET_BELT_REACTION_COOLDOWN) then
+		entry.last_belt_reaction_tick = now
+		if math.random() < 0.5 then
+			pet_state.force_emote(player_index, entry, "ecstatic")
+		else
+			pet_state.force_emote(player_index, entry, "sick")
+		end
+	end
+end
+
 local function process_pet(player_index)
 
 	local player = game.get_player(player_index)
@@ -716,7 +735,7 @@ local function process_pet(player_index)
 	debug.visualize_behavioral_radii(player_index)
 
 	evaluate_birthday(player_index, player, entry)
-
+	evaluate_if_pet_is_on_belt(player_index, entry, pet)
 	local behavior = pet_state.get_behavior(player_index)
 
 	-- Return fetched item.

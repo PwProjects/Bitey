@@ -76,6 +76,7 @@ local function make_pet_variant(base, name)
 	local base_health = pet.max_health or 1
 	local health_scale = HEALTH[name] or 1
 	pet.max_health = math.floor(base_health * health_scale)
+	pet.map_color = {r = 0.3, g = 0.9, b = 0.3}
 	return pet
 end
 
@@ -118,6 +119,7 @@ local function make_sleeping_pet_variant(base, name)
 	local base_health = pet.max_health or 1
 	local health_scale = HEALTH[name] or 1
 	pet.max_health = math.floor(base_health * health_scale)
+	pet.map_color = {r = 0.3, g = 0.9, b = 0.3}
 	return pet
 end
 

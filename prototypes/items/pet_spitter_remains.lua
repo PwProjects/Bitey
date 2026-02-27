@@ -37,6 +37,7 @@ data:extend({
 			"placeable-neutral",
 			"player-creation"
 		},
+		map_color = {r = 0.3, g = 0.9, b = 0.3},
 		allow_copy_paste = false,
 		hidden_in_factoriopedia = true,
 		max_health = 500,
@@ -164,6 +165,7 @@ data:extend({
 			"no-automated-item-removal",
 			"hide-alt-info"
 		},
+		map_color = {r = 0.3, g = 0.9, b = 0.3},
 		working_sound = {
 			sound = {
 				filename = "__biter-pet__/sounds/memorial.ogg",

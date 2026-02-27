@@ -133,5 +133,8 @@ return {
 	VALID_PET_REMAINS = {
 		["pet-biter-remains-placeholder"] = true,
 		["pet-spitter-remains-placeholder"] = true
-	}
+	},
+
+	-- Miscellaneous
+	PET_BELT_REACTION_COOLDOWN = 60 * 3
 }
