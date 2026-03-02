@@ -1,7 +1,3 @@
--- TODO: Pet not attacking closest enemy.
--- TODO: Fix play dead.
--- TODO: Worms attack any player that damages.
-
 local debug = require("scripts.utilities.debug")
 local pet_lifecycle = require("scripts.core.pet_lifecycle")
 local pet_state = require("scripts.core.pet_state")
@@ -30,7 +26,6 @@ function events.on_init()
 	end
 end
 
--- TODO: Test mod on existing save that didn't have mod enabled to make sure this prevent pet cloning bug.
 function events.on_configuration_changed(cfg)
 	pet_init.initialize_storage()
 	pet_init.create_orphan_force()
@@ -42,8 +37,8 @@ function events.on_configuration_changed(cfg)
 	end
 end
 
+-- Remove this and the on_load() call from control.lua at some point.
 function events.on_load()
-	-- Rebind metatables at some point.
 end
 
 local function evaluate_pet_damage(player_index, entry, event, entity)
@@ -121,21 +116,37 @@ function events.on_entity_damaged(event)
 	end
 end
 
-local function permanent_night()
-	local s = game.surfaces["nauvis"]
-	s.daytime = 0.85
-	s.freeze_daytime = true
+function events.on_player_driving_changed_state(event)
+	local vehicle = event.entity
+	if vehicle.name ~= "cargo-pod" then return end
+
+	local player_index = event.player_index
+	local player = game.get_player(player_index)
+	if not (player and player.valid) then return end
+
+	local entry = pet_lifecycle.ensure_pet_entry(event.player_index)
+	if entry.is_orphaned then return end
+
+	if player.driving then
+		entry.player_in_space = true
+		local pet = entry.unit
+		if (pet and pet.valid) then pet.destroy() end
+	else
+		if player.surface.planet then
+			entry.player_in_space = false
+			entry.guard_position = nil
+			entry.unit = pet_lifecycle.ensure_runtime_pet(player_index, entry)
+			pet_state.pause(player_index, 120)
+			local planet = player.surface.planet.name
+			pet_state.force_emote(player.index, entry, planet)
+			pet_state.force_emote(player.index, entry, "scared")
+		end
+	end
 end
 
 function events.on_player_created(event)
 	pet_lifecycle.ensure_initial_pet(event.player_index)
-	permanent_night()
-end
-
-function events.on_tick(event)
-	pet_lifecycle.on_tick(event)
-	pet_animation.animate_pet_reaction_icon()
-	pet_memorial.on_tick(event)
+	pet_init.check_existing_research()
 end
 
 function events.on_entity_died(event)
@@ -178,6 +189,7 @@ function events.pet_open_gui(event)
 	if not (target and target.valid and target.type == "unit") then return end
 
 	local entry = storage.biter_pet[event.player_index]
+	if entry.is_orphaned then return end
 	entry.gui = entry.gui or {}
 	entry.gui.stats = entry.gui.stats or {}
 	entry.gui.camera = entry.gui.camera or nil
@@ -324,41 +336,23 @@ function events.on_built_entity(event)
 	}
 end
 
-function events.on_player_main_inventory_changed(event)
-	local player = game.get_player(event.player_index)
-	if not (player and player.valid) then return end
-
-	local inventory = player.get_main_inventory()
-	if not inventory then return end
-
-	if inventory.get_item_count("pet-biter-remains") > 0 then
-		local technology = player.force.technologies["pet-biter-grief-processing"]
-		if technology and not technology.researched then
-			technology.researched = true
-			technology.enabled = true
-			player.unlock_achievement("pet-fallen")
-		end
-	end
-
-	if inventory.get_item_count("pet-spitter-remains") > 0 then
-		local technology = player.force.technologies["pet-spitter-grief-processing"]
-		if technology and not technology.researched then
-			technology.researched = true
-			technology.enabled = true
-			player.unlock_achievement("pet-fallen")
-		end
-	end
-end
-
 function events.on_player_mined_entity(event)
 	local entity = event.entity
-	if not LC.VALID_PET_REMAINS[entity.name] then return end
+	local technology_name = LC.VALID_PET_REMAINS[entity.name]
+	if not technology_name then return end
 
 	local player = game.get_player(event.player_index)
 	if not (player and player.valid) then return end
 
 	local entry = storage.biter_pet[player.index]
 	if not entry then return end
+
+	local technology = player.force.technologies[technology_name]
+	if technology and not technology.researched then
+		technology.researched = true
+		technology.enabled = true
+		player.unlock_achievement("pet-fallen")
+	end
 
 	notifications.pickup_remains_flavor_text(player, entry)
 	local surface = entity.surface

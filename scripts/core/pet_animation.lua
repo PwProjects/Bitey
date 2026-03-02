@@ -7,7 +7,6 @@ local RENDER_SETTINGS = PET_VISUALS_CONSTANTS.RENDER_SETTINGS
 local pet_animation = {}
 
 function pet_animation.animate_pet_reaction_icon()
-	if game.tick % 2 ~= 0 then return end
 	local pet_emote_queue = storage.pet_emote_sprite_queue
 	if not pet_emote_queue or #pet_emote_queue == 0 then return end
 	for i = #pet_emote_queue, 1, -1 do

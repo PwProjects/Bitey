@@ -59,7 +59,7 @@ local function show_pet_reaction(player_index, entry, emote_data, fast_render)
 	end
 
 	if not successful then
-		-- Error rendering emote.
+		-- The emote probably didn't exist.
 		return
 	end
 
@@ -100,7 +100,9 @@ function pet_visuals.emote(player_index, entry, emote, fast_render)
 	local pet = entry.unit
 
 	local data = SM[emote]
-	if not data then return end
+	if not data then
+		data = {sprite = emote}
+	end
 
 	local sprite_render = show_pet_reaction(player_index, entry, data, fast_render)
 

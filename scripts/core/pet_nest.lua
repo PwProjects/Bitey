@@ -68,7 +68,7 @@ function pet_nest.decorate(surface, position)
 		"simple-entity"
 	})
 
-	-- Scatter decoratives around nest.
+	-- Scatter decoratives.
 	for i = 1, 120 do
 		local deco = DECORATIVES[math.random(#DECORATIVES)]
 		local offset = random_offset(6)
@@ -88,7 +88,7 @@ function pet_nest.decorate(surface, position)
 		}
 	end
 
-	-- Position "Martha" and "Bruce" corpses.
+	-- Spawn "Martha" and "Bruce".
 	local offset = random_offset(4)
 	surface.create_entity {
 		name = "medium-biter-corpse",
@@ -108,7 +108,7 @@ function pet_nest.decorate(surface, position)
 		force = "neutral"
 	}
 
-	-- Position "Joe Chill" remnant.
+	-- Spawm "Joe Chill".
 	surface.create_entity {
 		name = "tank-remnants",
 		position = {

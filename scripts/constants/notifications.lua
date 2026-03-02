@@ -124,6 +124,19 @@ local PETTING_FLAVOR_TEXT = {
 	"Does petting even work on an exoskeleton?"
 }
 
+local PLAYING_DEAD_FLAVOR_TEXT = {
+	"Reach for the skies...",
+	"Draw!",
+	"This factory ain't big enough for the both of us...",
+	"On, no! You died...",
+	"Eat lead...",
+	"This is a stick up!",
+	"Your only weakness... bullets!",
+	"He's dead, Jim!",
+	"Bang!",
+	"And the Oscar goes to..."
+}
+
 local PICKUP_REMAINS_FLAVOR_TEXT = {
 	"You were so brave...",
 	"...",
@@ -174,6 +187,13 @@ local PET_GROWTH_FLAVOR_TEXT = {
 	"They grow up so fast..."
 }
 
+local PET_MORPH_FLAVOR_TEXT = {
+	"You look different...",
+	"Did you change your hair?",
+	"What the hell...",
+	"Is this a new look?"
+}
+
 local PETTING_MODIFIERS_AND_SETTINGS = {
 	PETTING_FLAVOR_TEXT_COOLDOWN = 60 * 5,
 	PETTING_REWARD_COOLDOWN = 60 * 60 * 5,
@@ -209,5 +229,7 @@ return {
 	PICKUP_REMAINS_FLAVOR_TEXT = PICKUP_REMAINS_FLAVOR_TEXT,
 	PICKUP_LONG_LIVED_REMAINS_FLAVOR_TEXT = PICKUP_LONG_LIVED_REMAINS_FLAVOR_TEXT,
 	PLAYER_RESURRECTED_FLAVOR_TEXT = PLAYER_RESURRECTED_FLAVOR_TEXT,
-	PET_GROWTH_FLAVOR_TEXT = PET_GROWTH_FLAVOR_TEXT
+	PET_GROWTH_FLAVOR_TEXT = PET_GROWTH_FLAVOR_TEXT,
+	PLAYING_DEAD_FLAVOR_TEXT = PLAYING_DEAD_FLAVOR_TEXT,
+	PET_MORPH_FLAVOR_TEXT = PET_MORPH_FLAVOR_TEXT
 }

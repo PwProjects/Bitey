@@ -1,4 +1,3 @@
--- Growth tiers and thresholds.
 local GROWTH_RULES = {
 	["pet-small-biter-baby"] = {
 		next = "pet-small-biter-small",

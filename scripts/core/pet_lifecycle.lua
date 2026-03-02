@@ -36,8 +36,8 @@ end
 function pet_lifecycle.ensure_pet_entry(player_index)
 	storage.biter_pet = storage.biter_pet or {}
 	local entry = storage.biter_pet[player_index]
+	local player = game.get_player(player_index)
 
-	-- This table is mainly for pet lifecycle data.
 	if not entry then
 		entry = {
 			intro_notification_sent = false,
@@ -47,11 +47,10 @@ function pet_lifecycle.ensure_pet_entry(player_index)
 			biter_tier = "pet-small-biter-baby",
 			current_form = "active",
 			current_species = "biter",
-			unit = nil
+			unit = nil,
 		}
 		storage.biter_pet[player_index] = entry
 	else
-		-- Lua, your falsy nils have caused be nothing but pain.
 		if entry.intro_notification_sent == nil then entry.intro_notification_sent = false end
 		if entry.is_orphaned == nil then entry.is_orphaned = true end
 		if entry.was_alive == nil then entry.was_alive = true end
@@ -71,7 +70,6 @@ function pet_lifecycle.ensure_initial_pet(player_index)
 	local entry = pet_lifecycle.ensure_pet_entry(player_index)
 	if entry.unit and entry.unit.valid then return entry.unit end
 
-	-- Find a suitable position to spawn the biter and nest.
 	local generate_decoratives = false
 	if not storage.pet_spawn_point then
 		storage.pet_spawn_point = pet_spawn.choose_orphan_spawn(player.surface, player.position)
@@ -98,7 +96,6 @@ local function find_nearest_interactable_item(player_index, pet, entry)
 	local surface = pet.surface
 	local position = pet.position
 
-	-- Find all item entities within search radius.
 	local items = surface.find_entities_filtered {
 		position = position,
 		radius = LC.ITEM_SEARCH_RADIUS,
@@ -117,7 +114,6 @@ local function find_nearest_interactable_item(player_index, pet, entry)
 
 	local returnable_item = pet_state.get_returnable_item(player_index)
 
-	-- Return the nearest interactable item.
 	for _, item in ipairs(items) do
 		if not (item.stack and item.stack.valid_for_read) then goto continue end
 		local name = item.stack.name
@@ -145,13 +141,11 @@ end
 local function handle_item_interaction(player_index, player, pet, entry)
 	local target = pet_state.get_item_target(player_index)
 
-	-- Pathing target disappeared.
 	if not (target and target.valid) then
 		pet_state.clear_item_target(player_index)
 		return false
 	end
 
-	-- Path toward item until it's within interaction radius.
 	local distance = position_util.distance_squared(pet.position, target.position)
 	if distance > LC.INTERACT_RADIUS_SQUARED then
 		pet.commandable.set_command {
@@ -200,11 +194,12 @@ local function finish_investigation(player_index, player, pet, entry)
 
 	local entity_emote = "item/" .. entry.investigation_target.name
 	local emotes = LC.INVESTIGATION_EMOTES
+
 	pet_state.force_emote(player_index, entry, entity_emote, true)
 	pet_state.force_emote(player_index, entry, emotes[math.random(#emotes)])
-
 	pet_state.pause(player_index, 120)
-	entry.investigateing = false
+
+	entry.investigating = false
 	entry.investigation_target = nil
 	pet_state.clear_idle_target(player_index)
 end
@@ -229,7 +224,7 @@ local function state_investigation(player_index, player, pet, entry)
 		type = defines.command.go_to_location,
 		destination = destination,
 		radius = 0.5,
-		distraction = defines.distraction.none,
+		distraction = defines.distraction.by_enemy,
 		pathfind_flags = {
 			allow_paths_through_own_entities = true,
 			prefer_straight_paths = true
@@ -263,7 +258,7 @@ local function try_starting_investigation(player_index, player, pet, entry)
 	return true
 end
 
-local function get_tether_position(player, entry)
+local function get_tether_position(player, entry, pet)
 	if entry.is_orphaned then
 		return storage.pet_spawn_point or pet.position
 	elseif entry.guard_position then
@@ -275,7 +270,7 @@ end
 
 local function evaluate_laziness(player_index, entry)
 	local behavior = pet_state.get_behavior(player_index)
-	if math.random() < 0.05 and behavior ~= "sleeping" then
+	if math.random() < LC.ASLEEP_ON_THE_JOB_CHANCE and behavior ~= "sleeping" then
 		pet_state.add_tiredness(player_index, 50)
 		return true
 	end
@@ -304,7 +299,7 @@ local function state_idle(player_index, player, pet, entry)
 	local radius = (entry.guarding_body and LC.PET_GUARD_CORPSE_RADIUS) or LC.FOLLOW_RADIUS_BY_TIER[pet.name] or
 			               LC.PET_FOLLOW_RADIUS
 
-	local tether = get_tether_position(player, entry)
+	local tether = get_tether_position(player, entry, pet)
 	local distance_squared_to_tether = position_util.distance_squared(pet.position, tether)
 
 	-- Revert back to follow state if pet wanders beyond extended idle radius.
@@ -396,7 +391,7 @@ local function evaluate_target(player_index, pet, entry, target)
 	end
 end
 
-local function ensure_runtime_pet(player_index, entry)
+function pet_lifecycle.ensure_runtime_pet(player_index, entry)
 	local player = game.get_player(player_index)
 
 	if entry.unit and entry.unit.valid then return entry.unit end
@@ -412,7 +407,6 @@ local function ensure_runtime_pet(player_index, entry)
 	local last_death = entry.last_death_tick or 0
 
 	local remaining = math.floor((SS.ticks_per_day - (now - last_death)) / 60)
-	-- debug.trace(string.format("Pet spawn will trigger in %s seconds.", t.f(remaining, "f")))
 	if (now - last_death) >= SS.ticks_per_day or DC.DEBUG_BYPASS_RESPAWN_DELAY then
 		debug.info("Spawning replacement orphan.")
 		pet_spawn.spawn_orphan_baby(player, entry, false)
@@ -426,7 +420,6 @@ local function handle_pause(player_index, entry, pet)
 	local paused_now = pet_state.is_paused(player_index)
 	local was_paused = entry.was_paused or false
 
-	-- Still paused; skip all behaviors.
 	if paused_now then
 		pet.commandable.set_command {
 			type = defines.command.stop,
@@ -438,7 +431,6 @@ local function handle_pause(player_index, entry, pet)
 		return true
 	end
 
-	-- Pause just ended; resume idle behvaior.
 	if was_paused and not paused_now then
 		entry.was_paused = false
 		pet_state.set_behavior(player_index, "idle")
@@ -482,8 +474,8 @@ local function state_seek_item(player_index, player, pet, entry)
 end
 
 local function state_eat(player_index, player, pet)
-	-- Eating is handled in handle_item_interaction().
-	-- This state exists only to transition into pause.
+	-- This state only exists to transition into pause.
+	-- Eating behavior handled in handle_item_interaction().
 end
 
 local function state_follow(player_index, player, pet, entry)
@@ -645,6 +637,9 @@ end
 local function evaluate_returnable_item_state(player_index, player, pet)
 	local returnable = pet_state.get_returnable_item(player_index)
 	if not returnable then return end
+
+	if player.surface ~= pet.surface then return end
+
 	local items = pet.surface.find_entities_filtered {
 		type = "item-entity",
 		position = player.position,
@@ -717,12 +712,12 @@ local function evaluate_if_pet_is_on_belt(player_index, entry, pet)
 end
 
 local function process_pet(player_index)
-
 	local player = game.get_player(player_index)
 	if not is_player_valid(player) then return end
 
 	local entry = pet_lifecycle.ensure_pet_entry(player_index)
-	local pet = ensure_runtime_pet(player_index, entry)
+
+	local pet = pet_lifecycle.ensure_runtime_pet(player_index, entry)
 	if not pet then return end
 
 	-- Sleeping branch.
@@ -743,6 +738,7 @@ local function process_pet(player_index)
 	if behavior == "return_item" then return state_return_item(player_index, player, pet, entry) end
 
 	evaluate_returnable_item_state(player_index, player, pet)
+
 	-- Combat branch.
 	if behavior == "flee" then
 		state_flee(player_index, player, pet, entry)
@@ -822,14 +818,15 @@ end
 
 function pet_lifecycle.on_tick(event)
 	if not storage.biter_pet then return end
-	if (event.tick % 30) ~= 0 then return end
 	for player_index, entry in pairs(storage.biter_pet) do
-		process_pet(player_index)
-		pet_behavior.process_events(player_index, entry)
-		pet_gui.update_pet_gui_progressbars(player_index)
-		prune_expired_buffs(entry)
-		pet_memorial.monitor_memorials(event)
-		notifications.process_delayed_commentary(player_index, entry)
+		if not entry.player_in_space then
+			process_pet(player_index)
+			pet_behavior.process_events(player_index, entry)
+			pet_gui.update_pet_gui_progressbars(player_index)
+			prune_expired_buffs(entry)
+			pet_memorial.monitor_memorials(event)
+			notifications.process_delayed_commentary(player_index, entry)
+		end
 	end
 end
 
@@ -944,20 +941,15 @@ function pet_lifecycle.on_pet_damaged(player_index, entry, event)
 		pet_state.force_emote(player_index, entry, "angry")
 	end
 
-	state.attack_target = player.character
-	pet_state.set_behavior(player_index, "flee")
-
-	-- Check origin of damage.
 	if event.force ~= player.force then return end
 
 	-- Evaluate friendly-fire.
-	local maximum_health = entry.unit.prototype.get_max_health()
+	local maximum_health = entry.unit.max_health
 	local current_health = entry.unit.health
 	local damage = event.final_damage_amount
 
-	local is_full_health = (current_health >= maximum_health)
+	local is_full_health = (current_health >= (maximum_health * 0.9))
 	local damage_insignificant = (damage <= maximum_health * 0.1)
-
 	if state.friendship < BT.friendship_total_betrayal then
 		pet_modifiers.apply_friendly_fire_modifiers(player_index, entry, "total_betrayal")
 		pet_state.force_emote(player_index, entry, "angry")
@@ -967,8 +959,14 @@ function pet_lifecycle.on_pet_damaged(player_index, entry, event)
 		pet_state.force_emote(player_index, entry, "very-sad")
 	elseif state.friendship >= BT.friendship_playing_dead and is_full_health and damage_insignificant then
 		pet_modifiers.apply_friendly_fire_modifiers(player_index, entry, "playing-dead")
+		pet.commandable.set_command {
+			type = defines.command.stop,
+			distraction = defines.distraction.none
+		}
+		pet_state.pause(player_index, 120)
 		pet_state.force_emote(player_index, entry, "playing-dead")
-		pet_state.force_emote(player_index, entry, "silly")
+		pet_state.force_emote(player_index, entry, "ecstatic")
+		notifications.playing_dead_flavor_text(player, entry)
 	else
 		pet_modifiers.apply_friendly_fire_modifiers(player_index, entry, "betrayal")
 		pet_state.force_emote(player_index, entry, "scared")
@@ -986,7 +984,6 @@ function pet_lifecycle.debug_dump(player)
 	local pet = entry.unit
 	if not (pet and pet.valid) then return end
 
-	-- Pre-format of pet data.
 	local position = string.format("[%s,%s]", pet.position.x, pet.position.y)
 	local distance = string.format("%.2f", position_util and position_util.distance and
 			position_util.distance_squared(pet.position, player.position) or "N/A")
@@ -1001,7 +998,6 @@ function pet_lifecycle.debug_dump(player)
 
 	local fetch_plays = entry.fetch_plays or 0
 
-	-- Final format.
 	local pet_name = string.format("%s %s", t.fm("Tier:", "l"), t.fm(pet.name or "<?>", "m", 1))
 	local pet_type = string.format("%s %s", t.fm("Type:", "l"), t.fm(pet.type or "<?>", "m", 1))
 	local pet_position = string.format("%s %s", t.fm("Position:", "l"), t.fm(position, "m", 1))

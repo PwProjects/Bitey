@@ -75,17 +75,21 @@ function pet_reactions.process_item_interaction(player_index, pet, entry, item_n
 	pet_modifiers.apply_modifiers(player_index, entry, modifiers)
 	process_reactions(player_index, entry, reactions)
 
-	if item.interaction == "eat" then
-		if not entry.is_orphaned then
+	if not entry.is_orphaned then
+		if item.interaction == "eat" then
 			pet_growth.try_grow(player_index, entry)
 			pet_morph.evaluate_morph_state(player_index, pet, entry, item_name)
 			if item.glow and applicable_to_game_configuration(item.glow) then spawn_glow(entry, item.glow) end
+			pet_state.set_behavior(player_index, "eat")
+		elseif item.interaction == "drink" then
+			pet_morph.evaluate_morph_state(player_index, pet, entry, item_name)
+			if item.glow and applicable_to_game_configuration(item.glow) then spawn_glow(entry, item.glow) end
+			pet_state.set_behavior(player_index, "eat")			
+		elseif item.interaction == "fetch" then
+			entry.fetch_plays = (entry.fetch_plays or 0) + 1
+			pet_state.set_behavior(player_index, "return_item")
+			pet_state.set_returnable_item(player_index, item_name)
 		end
-		pet_state.set_behavior(player_index, "eat")
-	elseif item.interaction == "fetch" then
-		entry.fetch_plays = (entry.fetch_plays or 0) + 1
-		pet_state.set_behavior(player_index, "return_item")
-		pet_state.set_returnable_item(player_index, item_name)
 	end
 
 	pet_state.set_item_target(player_index, nil)

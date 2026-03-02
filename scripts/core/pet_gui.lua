@@ -208,7 +208,7 @@ local function build_content(parent, player, pet, entry, gui)
 	build_stats_and_camera(content, player, pet, gui)
 end
 
--- Entry point.
+-- GUI Entry point.
 function pet_gui.open_pet_gui(player, pet, gui)
 	if not (pet and pet.valid) then return end
 

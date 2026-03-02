@@ -59,10 +59,8 @@ function pet_spawn.spawn_orphan_baby(player, entry, generate_decoratives)
 	local surface = player.surface
 	local species = "pet-small-biter-baby"
 
-	-- Store orphan respawn point in the event pet dies.
 	if not storage.pet_spawn_point then storage.pet_spawn_point = pet_spawn.choose_orphan_spawn(surface, player.position) end
 
-	-- Ensure the tile is actually walkable.
 	local position = surface.find_non_colliding_position(species, storage.pet_spawn_point, 10, 0.5)
 
 	if not position then
@@ -93,15 +91,27 @@ function pet_spawn.spawn_pet_for_player(player_index, player, entry)
 	local tier = entry.biter_tier or "pet-small-biter-baby"
 	debug.info(string.format("Recovering lost pet %s", t.f(tier, "f")))
 
-	local position = player.surface.find_non_colliding_position(tier, player.position, 15, 0.5)
-
-	if position then
-		entry.unit = player.surface.create_entity {
-			name = tier,
-			position = position,
-			force = player.force
-		}
-		return
+	if entry.is_orphaned then
+		local spawn_position = storage.pet_spawn_point
+		local position = player.surface.find_non_colliding_position(tier, spawn_position, 15, 0.5)
+		if position then
+			entry.unit = player.surface.create_entity {
+				name = tier,
+				position = position,
+				force = game.forces["pet_orphan"]
+			}
+			return
+		end
+	else
+		local position = player.surface.find_non_colliding_position(tier, player.position, 15, 0.5)
+		if position then
+			entry.unit = player.surface.create_entity {
+				name = tier,
+				position = position,
+				force = player.force
+			}
+			return
+		end
 	end
 end
 

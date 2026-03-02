@@ -17,13 +17,11 @@ local BD = require("scripts.constants.dreams").BITER_DREAMS
 
 local pet_state = {}
 
--- State functions.
 local function ensure_state(player_index)
 	storage.pet_state = storage.pet_state or {}
 	local state = storage.pet_state[player_index]
 
 	if not state then
-		-- Brand new pet state.
 		state = {
 			boredom = SD.boredom,
 			evolution = SD.evolution,

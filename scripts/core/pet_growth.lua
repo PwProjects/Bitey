@@ -11,7 +11,6 @@ local DC = require("scripts.constants.debug")
 
 local pet_growth = {}
 
--- Set evolution factor for testing: /c game.forces["enemy"].set_evolution_factor(0.99, game.player.surface)
 local function upgrade_pet(player_index, entry, new_name)
 	local old_unit = entry.unit
 	if not (old_unit and old_unit.valid) then return end
@@ -59,24 +58,23 @@ function pet_growth.try_grow(player_index, entry)
 
 	if not rule.next then return end
 
-	-- Pet growth hunger gate.
+	-- Hunger gate.
 	local hunger = pet_state.get_hunger(player_index) or 0
 	if hunger >= rule.hunger_threshold and not DC.DEBUG_BYPASS_EVOLUTION_GATES then return end
 
-	-- Pet growth evolution factor gate.
+	-- Evolution factor gate.
 	local surface = pet.surface
 	local evolution_factor = (DC.DEBUG_BYPASS_EVOLUTION_GATES and 1) or game.forces.enemy.get_evolution_factor(surface)
 	if evolution_factor < rule.evo_factor_threshold then return end
 
-	-- Pet growth chance gate.
+	-- Dice roll gate.
 	local chance = (DC.DEBUG_BYPASS_EVOLUTION_GATES and 1) or rule.chance
 	if math.random() >= chance then return end
 
-	-- Pet growth evolution state gate.
+	-- Evolution state gate.
 	local evolution = pet_state.get_evolution(player_index) or 0
 	if evolution < rule.evo_state_threshold and not DC.DEBUG_BYPASS_EVOLUTION_GATES then return end
 
-	-- All gate checks passed so perform upgrade.
 	entry = upgrade_pet(player_index, entry, rule.next)
 	if entry then
 		pet_state.force_emote(player_index, entry, "ecstatic")

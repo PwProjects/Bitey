@@ -100,7 +100,6 @@ local function spawn_memorial_wisps(entity, data, tick)
 end
 
 function pet_memorial.on_tick(event)
-	if (event.tick % 15) ~= 0 then return end
 	for id, data in pairs(pet_memorial.memorials) do
 		local entity = data.entity
 		if not entity.valid then

@@ -71,7 +71,6 @@ commands.add_command("bpset", string.format("%s %s", DC.ICON, t.f("Set pet attri
 
 	state[field] = new_value
 
-	-- Batch set pet attributes.
 	if field == "all" then
 		for attribute, _ in pairs(MA) do
 			state[attribute] = new_value

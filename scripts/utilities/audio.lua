@@ -5,7 +5,6 @@ function audio.play_pet_sound(player, entry, sound, volume)
 	local pet = entry.unit
 	if not (pet and pet.valid and player and player.valid and sound) then return end
 
-	-- Randomize pet's emote volume.
 	local random_volume = volume or (0.7 + math.random() * 0.3)
 	player.play_sound {
 		path = sound,

@@ -160,7 +160,15 @@ function position.get_direction_of_position(origin, destination)
 	return vertical or horizontal
 end
 
-function position.get_nearest_player_structure(player)
+function position.get_nearest_player_structure(player, entry)
+	if not (player and player.valid) then return nil end
+	if not entry then return nil end
+
+	local pet = entry.unit
+	if not (pet and pet.valid) then return nil end
+	
+	if player.surface ~= pet.surface then return nil end
+
 	local radius = 10
 	local surface = player.surface
 	local position = player.position

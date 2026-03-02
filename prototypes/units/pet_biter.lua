@@ -152,7 +152,6 @@ for species, base in pairs(BASES) do
 	for _, tiers in pairs(TIERS) do
 		local name = "pet-" .. base .. "-" .. tiers
 
-		-- 1. Create the active pet table
 		local active_pet = make_pet_variant(base, name)
 		table.insert(active_variants, active_pet)
 

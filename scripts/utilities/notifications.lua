@@ -21,6 +21,10 @@ local PUR = require("scripts.constants.notifications").PICKUP_REMAINS_FLAVOR_TEX
 local PLL = require("scripts.constants.notifications").PICKUP_LONG_LIVED_REMAINS_FLAVOR_TEXT
 local PRF = require("scripts.constants.notifications").PLAYER_RESURRECTED_FLAVOR_TEXT
 local PGF = require("scripts.constants.notifications").PET_GROWTH_FLAVOR_TEXT
+local MFT = require("scripts.constants.notifications").PET_MORPH_FLAVOR_TEXT
+local PDF = require("scripts.constants.notifications").PLAYING_DEAD_FLAVOR_TEXT
+
+local notifications = {}
 
 local notifications = {}
 
@@ -38,6 +42,8 @@ end
 
 function notifications.notify(player, message, sound)
 	if not (player and player.valid) then return end
+	if player.controller_type ~= defines.controllers.character then return end
+	
 	local character = player.character
 	if not (character and character.valid) then return end
 
@@ -75,7 +81,9 @@ end
 
 local function humanize_item_name(item_name)
 	if not item_name then return "machine" end
-	return item_name:gsub("-", " ")
+	item_name = item_name:gsub("%-%d+$", "")
+	item_name = item_name:gsub("-", " ")
+	return item_name
 end
 
 function notifications.investigation_flavor_text(player, entry, item_name)
@@ -128,6 +136,13 @@ function notifications.pet_growth_flavor_text(player, entry)
 	notifications.notify(player, message, "utility/achievement_unlocked")	
 end
 
+function notifications.playing_dead_flavor_text(player, entry)
+	if not (player and player.valid) then return end
+	if not can_show_flavor(entry) then return end
+	local message = PDF[math.random(#PDF)]
+	notifications.notify(player, message)
+end
+
 function notifications.player_resurrected_flavor_text(player, entry)
 	if not (player and player.valid) then return end
 	if not can_show_flavor(entry) then return end
@@ -162,7 +177,7 @@ function notifications.guard_flavor_text(player, entry)
 	if not (player and player.valid) then return end
 	if not can_show_flavor(entry) then return end
 	local message
-	local structure = position_util.get_nearest_player_structure(player)
+	local structure = position_util.get_nearest_player_structure(player, entry)
 	if structure and structure.name then
 		local structure_name = humanize_item_name(structure.name)
 		local template = GFS[math.random(#GFS)]
@@ -222,6 +237,13 @@ function notifications.petting_biter_flavor_text(player, entry)
 		pet_state.add_boredom(player_index, PMS.BOREDOM_BONUS)
 		entry.last_petting_reward_tick = now
 	end
+end
+
+function notifications.morph_flavor_text(player, entry)
+	if not (player and player.valid) then return end
+	if not can_show_flavor(entry) then return end
+	local message = MFT[math.random(#MFT)]
+	notifications.notify(player, message, "utility/achievement_unlocked")	
 end
 
 function notifications.process_delayed_commentary(player_index, entry)

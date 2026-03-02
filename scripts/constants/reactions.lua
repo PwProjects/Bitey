@@ -66,7 +66,7 @@ local ITEM_DEFINITIONS = {
 		},
 		interaction = "drink",
 		need_check = function(needs)
-			return needs.thirst < LC.SEEK_WATER_THIRST_THRESHOLD
+			return needs.thirst > LC.SEEK_WATER_THIRST_THRESHOLD
 		end,
 		modifiers = {
 			boredom = -1,

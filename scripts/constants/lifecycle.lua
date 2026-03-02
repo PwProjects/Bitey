@@ -3,16 +3,16 @@ return {
 	PET_DEFAULT_NAME = "Bitey",
 
 	-- Attacking.
-	PET_ATTACK_RADIUS = 5.0, -- Default: 5.0
+	PET_ATTACK_RADIUS = 5.0,
 
 	-- Fleeing.
-	PET_SAFE_THRESHOLD = 0.80, -- Default: 0.80
-	PET_FLEE_THRESHOLD = 0.25, -- Default: 0.25
-	PET_FLEE_SAFE_DISTANCE = 50, -- Default: 50
-	PET_FLEE_HAPPINESS_PENALTY = -5, -- Default: -5
-	PET_FLEE_HUNGER_PENALTY = 8, -- Default: 8
-	PET_FLEE_THIRST_PENALTY = 15, -- Default: 15
-	PET_FLEE_BOREDOM_PENALTY = -15, -- Default: -15
+	PET_SAFE_THRESHOLD = 0.80,
+	PET_FLEE_THRESHOLD = 0.25,
+	PET_FLEE_SAFE_DISTANCE = 50,
+	PET_FLEE_HAPPINESS_PENALTY = -5,
+	PET_FLEE_HUNGER_PENALTY = 8,
+	PET_FLEE_THIRST_PENALTY = 15,
+	PET_FLEE_BOREDOM_PENALTY = -15,
 
 	-- Following.
 	PET_GUARD_CORPSE_RADIUS = 3.0,
@@ -66,7 +66,8 @@ return {
 	GUARD_RADIUS = 10,
 	GUARD_RADIUS_SQUARED = 10 * 10,
 	GUARDING_INVESTIGATION_MULTIPLIER = 3,
-	INVESTIGATION_CHANCE = 0.001, -- Default: 0.001
+	ASLEEP_ON_THE_JOB_CHANCE = 0.005,
+	INVESTIGATION_CHANCE = 0.005,
 	INVESTIGATION_RADIUS = 20,
 	INVESTIGATION_RADIUS_SQUARED = 20 * 20,
 	INVESTIGATION_TARGETS = {
@@ -131,8 +132,8 @@ return {
 		spitter = "pet-spitter-remains-placeholder"
 	},
 	VALID_PET_REMAINS = {
-		["pet-biter-remains-placeholder"] = true,
-		["pet-spitter-remains-placeholder"] = true
+		["pet-biter-remains-placeholder"] = "pet-biter-grief-processing",
+		["pet-spitter-remains-placeholder"] = "pet-spitter-grief-processing"
 	},
 
 	-- Miscellaneous

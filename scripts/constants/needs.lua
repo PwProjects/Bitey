@@ -1,21 +1,17 @@
--- Use /bpmoods to switch to high-frequency debug intervals.
 local NEED_INTERVALS = {
-
-	-- TODO: Finalize these interval values.
-	-- State tick intervals for physiological needs (ticks per second) * (seconds).
 	active = {
-		mood = 60 * 25,
-		hunger = 60 * 10,
-		thirst = 60 * 20,
+		mood = 60 * 30,
+		hunger = 60 * 60,
+		thirst = 60 * 120,
 		boredom = 60 * 60,
-		tiredness = 60 * 5
+		tiredness = 60 * 30
 	},
 	idle = {
-		mood = 60 * 15,
-		hunger = 60 * 15,
-		thirst = 60 * 30,
-		boredom = 60 * 30,
-		tiredness = 60 * 5
+		mood = 60 * 30,
+		hunger = 60 * 120,
+		thirst = 60 * 240,
+		boredom = 60 * 120,
+		tiredness = 60 * 60
 	},
 	sleeping = {
 		mood = 60 * 10,
@@ -35,14 +31,12 @@ local NEED_INTERVALS = {
 local NEED_RATES = {
 	active = {
 		increments = {
-			-- Need increment values per need interval.
 			hunger = 2,
 			thirst = 2,
 			boredom = 1,
 			tiredness = 2
 		},
 		penalties = {
-			-- Mood (happiness) penalty for negative physiological states at interval.
 			hunger = -3,
 			thirst = -2,
 			boredom = -1,

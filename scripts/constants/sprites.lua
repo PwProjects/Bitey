@@ -183,7 +183,24 @@ local SPRITE_MAP = {
 	},
 	["tree-seed"] = {
 		sprite = "item/tree-seed"
-	}
+	},
+
+	-- Planet emotes.
+	["nauvis"] = {
+		sprite = "space-location/nauvis"
+	},
+	["vulcanus"] = {
+		sprite = "space-location/vulcanus"
+	},
+	["gleba"] = {
+		sprite = "space-location/gleba"
+	},
+	["fulgora"] = {
+		sprite = "space-location/fulgora"
+	},
+	["aquilo"] = {
+		sprite = "space-location/aquilo"
+	},
 }
 
 return {

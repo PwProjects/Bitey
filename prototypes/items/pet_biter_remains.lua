@@ -44,7 +44,7 @@ data:extend({
 		destructible = false,
 		is_military_target = false,
 		minable = {
-			mining_time = 2,
+			mining_time = 4,
 			result = "pet-biter-remains"
 		},
 		animations = {

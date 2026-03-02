@@ -1,10 +1,8 @@
 return {
-	-- Fonts.
 	DEFAULT_FONT = "heading-1",
 	DEFAULT_MONO_FONT = "debug-mono",
 	DEFAULT_HEADER_FONT = "infinite",
 
-	-- Text formatting and debugging colors.
 	MESSAGE_COLOR = "#dddddd", -- m
 	LABEL_COLOR = "#aaaaaa", -- l
 	ALWAYS_COLOR = "#ff00ff", -- a
@@ -16,7 +14,6 @@ return {
 	CLASS_COLOR = "#00cccc", -- c
 	FUNCTION_COLOR = "#00ffff", -- f
 
-	-- Miscellaneous colors.
 	DAMAGED_HEALTH = "#ff8888",
 	FULL_HEALTH = "#88ff88"
 }
