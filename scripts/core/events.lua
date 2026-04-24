@@ -170,6 +170,7 @@ function events.on_research_finished(event)
 end
 
 function events.on_marked_for_deconstruction(event)
+	if event.player_index == nil then return end -- guard against crashes when fired by a non-player
 	local entry = pet_lifecycle.ensure_pet_entry(event.player_index)
 	local entity = event.entity
 	if entity.type ~= "tree" then return end
